@@ -1,0 +1,508 @@
+==============================================================
+IMPLEMENTATION CONTEXT: Zernike-Based Descriptors for CMA-MEGA
+Lens Design Quality-Diversity Search
+==============================================================
+
+PURPOSE OF THIS DOCUMENT:
+This document provides grounded technical context for implementing
+Zernike wavefront decomposition as behavioral descriptors in a
+CMA-MEGA (Differentiable Quality-Diversity) pipeline for lens design.
+The system currently uses proxy measures (focal power, bending).
+The goal is to replace these with physically grounded Zernike
+coefficients derived from full ray tracing.
+
+This is NOT a one-shot implementation task. This document provides
+the framework understanding so that implementation can proceed
+incrementally with verification at each stage.
+
+---
+SECTION 1: CURRENT SYSTEM OVERVIEW
+---
+
+1.1 What exists and works:
+- A differentiable sequential ray tracer capable of tracing 256 rays
+  through a lens system (singlet, doublet, or triplet)
+- CMA-MEGA implementation using pyribs library
+- Working singlet and doublet archives with current proxy measures
+- Triplet archive partially working but unstable
+
+1.2 Current measure space:
+  m(theta) = [p_global, s_skew, |p|_total, a_offaxis, f_invalid]
+
+  Where:
+  - p_global: global optical power proxy
+  - s_skew: skewness/bending proxy
+  - |p|_total: total absolute power
+  - a_offaxis: off-axis behavior proxy
+  - f_invalid: fraction of rays that fail to reach sensor
+
+1.3 Problems with current measures:
+  - They are engineering heuristics, not physical optical quantities
+  - f_invalid is a counting function (step discontinuity), NOT
+    differentiable. This breaks the DQD framework because CMA-MEGA
+    requires gradients of ALL measures w.r.t. lens parameters.
+  - The proxy measures do not directly capture aberration content,
+    so the archive cells do not correspond to optically meaningful
+    regions of the design landscape.
+  - Two designs in different cells may have similar optical behavior;
+    two designs in the same cell may behave very differently.
+
+1.4 Current CMA-MEGA pipeline (simplified):
+  For each iteration:
+    1. Compute gradients: grad_f = d(objective)/d(theta)
+                          grad_m = d(measures)/d(theta)  [one per measure]
+    2. Sample coefficient vectors c ~ N(mu, Sigma) in R^(k+1)
+       where k = number of measures
+    3. Compute candidate solutions:
+       theta_i = theta_mu + sum(c_i * [grad_f, grad_m1, ..., grad_mk])
+    4. Evaluate each candidate: compute f(theta_i) and m(theta_i)
+    5. Insert into archive based on m(theta_i)
+    6. Rank candidates by archive IMPROVEMENT (not raw fitness)
+    7. Update CMA distribution (mu, Sigma) based on rankings
+
+  KEY: The CMA-ES operates in coefficient space R^(k+1), NOT in
+  parameter space R^n. This means the number of measures k directly
+  determines CMA dimensionality. Adding Zernike measures changes k
+  but the pipeline structure stays the same.
+
+---
+SECTION 2: WHAT ZERNIKE DESCRIPTORS ARE
+---
+
+2.1 Zernike polynomials (brief):
+Zernike polynomials Z_j(rho, phi) form an orthonormal basis over the
+unit disk (the exit pupil of the lens). Any wavefront W(rho, phi) can
+be decomposed as:
+
+  W(rho, phi) = sum_j  a_j * Z_j(rho, phi)
+
+where a_j are the Zernike coefficients. Each coefficient corresponds
+to a specific type of optical aberration:
+
+  Standard single-index (Noll or ANSI ordering):
+  j=1:  piston (constant phase, ignore)
+  j=2:  tilt x
+  j=3:  tilt y
+  j=4:  defocus          -- relates to optical power balance
+  j=5:  astigmatism 0    -- (oblique astigmatism)
+  j=6:  astigmatism 45   -- (vertical astigmatism)
+  j=7:  coma x           -- comatic aberration
+  j=8:  coma y
+  j=9:  trefoil
+  j=10: trefoil
+  j=11: primary spherical aberration -- the big one for singlets
+  j=12: secondary astigmatism
+  ...
+  j=16: secondary spherical
+
+For the purpose of this project, the proposed descriptor vector is:
+  m(theta) = [a_4, a_7, a_8, a_11]
+  or possibly: [a_4, a_5, a_6, a_7, a_8, a_11, a_16]
+
+The exact subset is a research question to be resolved by ablation.
+Start with the minimal set [a_4, a_11] (defocus + primary spherical)
+for initial validation on singlet, then expand.
+
+2.2 Why Zernike over Seidel aberration coefficients:
+- Seidel coefficients are THIRD-ORDER ONLY (paraxial approximation).
+  They break down at fast f-numbers and large apertures.
+- Zernike coefficients from a full ray trace capture ALL orders of
+  aberration simultaneously, because they're fitted to the actual
+  wavefront, not computed from a paraxial expansion.
+- Zernike coefficients are SYSTEM-LEVEL: they describe the net
+  wavefront at the exit pupil after light has passed through ALL
+  surfaces. This makes them topology-invariant -- a singlet and a
+  doublet can be placed in the same Zernike descriptor space.
+- Seidel coefficients can be computed per-surface, but then the
+  descriptor dimension changes with the number of surfaces.
+
+2.3 Why Zernike works with autodiff:
+The Zernike fit is LINEAR LEAST SQUARES.
+
+Given:
+  - opd_samples: vector of OPD values at N ray positions on the pupil
+  - Z_matrix: matrix of Zernike polynomial values evaluated at those
+    same N positions (this is CONSTANT for fixed ray positions)
+
+The fit is:
+  a = pinv(Z_matrix) @ opd_samples
+
+Since pinv(Z_matrix) is a constant matrix (ray positions are fixed),
+this is a LINEAR operation on opd_samples. Therefore:
+
+  d(a)/d(theta) = pinv(Z_matrix) @ d(opd_samples)/d(theta)
+
+The gradient flows through perfectly. No special handling needed.
+The autodiff graph is: theta -> ray trace -> ray positions at sensor
+-> OPD computation -> linear projection onto Zernike basis -> coefficients.
+
+The ONLY potential break point is the OPD computation itself (see
+Section 3 below).
+
+---
+SECTION 3: THE COMPUTATIONAL PIPELINE
+---
+
+The pipeline to go from lens parameters to Zernike descriptors is:
+
+  theta --> ray_trace --> (ray_positions, optical_path_lengths)
+        --> compute_OPD_at_pupil
+        --> zernike_fit
+        --> descriptor_vector m(theta)
+
+Each stage in detail:
+
+3.1 Stage 1: Ray tracing (ALREADY EXISTS)
+  Input: theta (lens parameters: curvatures, thicknesses, refractive indices)
+  Output: ray positions at sensor, and potentially OPL per ray
+  
+  The existing differentiable ray tracer (GeoLens.trace2sensor or
+  equivalent) traces 256 rays from object through lens to sensor.
+  It returns sensor intersection positions.
+  
+  CRITICAL CHECK NEEDED: Does the ray tracer accumulate Optical Path
+  Length (OPL) along each ray? OPL = sum of (refractive_index * geometric_distance)
+  for each segment of the ray path. If OPL is not currently tracked,
+  it needs to be added. This is straightforward: at each surface
+  interaction, accumulate n_i * d_i where n_i is the refractive
+  index of the current medium and d_i is the distance the ray travels
+  in that medium.
+
+  If OPL is NOT available:
+  - This is the first implementation task before anything else
+  - It requires modifying the ray tracing loop to accumulate path length
+  - The modification is small but must be done carefully to maintain
+    differentiability (all operations are multiplications and additions,
+    so autodiff handles it natively)
+
+3.2 Stage 2: Compute OPD at the exit pupil
+  Input: OPL for each ray, reference ray (chief ray) OPL
+  Output: OPD (Optical Path Difference) for each ray
+
+  OPD_i = OPL_i - OPL_chief
+
+  where OPL_chief is the optical path length of the chief ray (the ray
+  passing through the center of the aperture stop for a given field angle).
+
+  For on-axis field (field angle = 0):
+  - Chief ray is the axial ray (goes straight through center)
+  - OPD is computed relative to this reference
+
+  For off-axis fields:
+  - Chief ray is the ray from the off-axis object point through the
+    center of the aperture stop
+  - OPD is field-dependent
+
+  SIMPLIFICATION FOR INITIAL IMPLEMENTATION:
+  Start with ON-AXIS field only. This means:
+  - Trace 256 rays from an on-axis object point
+  - Chief ray = axial ray
+  - OPD = OPL_i - OPL_axial for each ray
+  - Fit Zernike to these OPD values
+  
+  This gives rotationally symmetric aberrations only (spherical,
+  defocus) which is perfect for singlet validation where biconvex,
+  plano-convex, and meniscus forms differ primarily in spherical
+  aberration content.
+
+  Expand to off-axis fields later for coma, astigmatism etc.
+
+3.3 Stage 3: Map ray positions to pupil coordinates
+  The Zernike polynomials are defined on the unit disk.
+  Each ray has a position on the entrance/exit pupil.
+  Normalize these positions to (rho, phi) on the unit disk:
+
+  rho_i = sqrt(x_i^2 + y_i^2) / R_pupil
+  phi_i = atan2(y_i, x_i)
+
+  where R_pupil is the radius of the exit pupil and (x_i, y_i) are
+  the ray positions on the pupil plane.
+
+  For a fixed ray sampling pattern (e.g., uniform grid on entrance
+  pupil), these normalized positions are CONSTANTS. This is what
+  makes the Zernike matrix constant and the fit linear.
+
+3.4 Stage 4: Zernike fit
+  Construct the Zernike basis matrix:
+
+  Z_matrix[i, j] = Z_j(rho_i, phi_i)
+
+  where i indexes rays (rows) and j indexes Zernike terms (columns).
+  Z_matrix has shape (N_rays, N_zernike_terms).
+
+  Fit coefficients:
+  a = pinv(Z_matrix) @ opd_vector
+
+  where opd_vector has shape (N_rays,) and a has shape (N_zernike_terms,).
+
+  Since Z_matrix is constant, pinv(Z_matrix) is precomputed ONCE
+  and stored. The fit reduces to a single matrix-vector multiply
+  per evaluation.
+
+  IMPLEMENTATION NOTE: Use numpy/jax/torch lstsq or manually precompute
+  the pseudoinverse. For autodiff, the matrix-vector multiply is
+  trivially differentiable.
+
+  LIBRARY OPTIONS:
+  - For numpy: np.linalg.lstsq(Z_matrix, opd_vector)
+  - For JAX: jnp.linalg.lstsq or precompute pinv and do matmul
+  - For PyTorch: torch.linalg.lstsq or precompute pinv
+  - Zernike polynomial evaluation: use `zernike` or `poppy` Python
+    packages, or implement directly from the analytical formulas
+    (they are well-tabulated polynomials in rho and phi)
+
+3.5 Stage 5: Select descriptor subset
+  From the full coefficient vector a, select the subset that forms
+  the behavioral descriptor:
+
+  m(theta) = [a[4], a[11]]  # minimal: defocus + spherical
+  or
+  m(theta) = [a[4], a[7], a[8], a[11]]  # adding coma x,y
+
+  This selection is a simple indexing operation, trivially differentiable.
+
+---
+SECTION 4: INTEGRATION WITH CMA-MEGA
+---
+
+4.1 What changes in the CMA-MEGA loop:
+  BEFORE (current proxy measures):
+    measures = compute_proxy_measures(theta)  # returns [p_global, s_skew, ...]
+    grad_measures = autodiff(compute_proxy_measures, theta)
+
+  AFTER (Zernike measures):
+    opd = compute_opd(trace_rays(theta))
+    zernike_coeffs = pinv_Z @ opd  # linear, differentiable
+    measures = zernike_coeffs[selected_indices]
+    grad_measures = autodiff(this_whole_chain, theta)
+
+  The rest of the CMA-MEGA loop (coefficient sampling, branching,
+  archive insertion, ranking, CMA update) is UNCHANGED.
+
+4.2 f_invalid handling:
+  REMOVE f_invalid from the measure vector entirely.
+  Instead, use it as an INSERTION CONSTRAINT on the archive:
+
+  if f_invalid(theta_candidate) > threshold:
+      reject this candidate (do not insert into archive)
+  else:
+      compute measures and insert normally
+
+  This is a simple if-statement in the archive insertion logic.
+  It does not need to be differentiable because it's not part of
+  the gradient computation -- it's a filter on which candidates
+  are allowed into the archive.
+
+4.3 Gradient normalization (CRITICAL):
+  Different Zernike coefficients have very different magnitudes.
+  a_4 (defocus) might be ~1e-2, while a_11 (spherical) might be ~1e-5.
+  Their gradients w.r.t. theta will differ by similar orders of magnitude.
+
+  Without normalization, CMA-MEGA will only explore along the
+  gradient direction of whichever measure has the largest gradient,
+  effectively ignoring the others.
+
+  Current normalization approach (from existing code):
+    half = 0.5 * (hi - lo)  # uses theta_bounds, not gradient scale
+  
+  Better approach: normalize each gradient to unit length before
+  forming the gradient matrix:
+    grad_m_i_normalized = grad_m_i / (||grad_m_i|| + epsilon)
+  
+  This ensures all measures contribute equally to the coefficient
+  blending in CMA-MEGA. The epsilon prevents division by zero.
+
+4.4 Archive structure:
+  With 2 Zernike descriptors: GridArchive with 2D grid (e.g., 100x100)
+  With 4 Zernike descriptors: CVTArchive (Centroidal Voronoi Tessellation)
+    - Uniform grid is intractable in 4D
+    - CVT with ~10,000 cells is manageable
+    - Available in pyribs as CVTArchive, drop-in replacement
+
+  Archive bounds should be set based on expected range of Zernike
+  coefficients for the lens type being explored. Run a preliminary
+  sweep (random lens parameters) to estimate the range of each
+  coefficient, then set archive bounds to cover ~2x that range.
+
+4.5 Ranking signal (IMPORTANT BUG IN CURRENT CODE):
+  The current implementation ranks candidates by raw fitness values.
+  The CORRECT ranking signal for CMA-MEGA is ARCHIVE IMPROVEMENT:
+  - Did this candidate improve a cell in the archive?
+  - If yes: high rank (even if raw fitness is mediocre)
+  - If no: low rank (even if raw fitness is high)
+
+  This is computed from the return value of archive.add() in pyribs,
+  which returns information about whether insertion was successful
+  and how much improvement occurred.
+
+  This fix is independent of the Zernike change and should be done
+  regardless. It is likely contributing to the triplet instability.
+
+---
+SECTION 5: INCREMENTAL IMPLEMENTATION PLAN
+---
+
+DO NOT implement everything at once. Each step should be verified
+independently before proceeding.
+
+STEP 0: Fix the ranking signal bug
+  - Modify the tell() method to use archive improvement, not raw fitness
+  - Verify: run singlet with CURRENT proxy measures, compare archive
+    quality (QD-score, coverage) before and after fix
+  - This is independent of Zernike and is highest leverage
+
+STEP 1: Check if OPL is available from ray tracer
+  - Inspect GeoLens.trace2sensor (or equivalent trace function)
+  - Look for: does it return or accumulate optical path length?
+  - If yes: note the API, proceed to Step 2
+  - If no: add OPL accumulation to the trace loop
+    - At each propagation step: opl += n * distance
+    - Return opl alongside ray positions
+  - Verify: for a known lens (e.g., thin lens with known focal length),
+    compute OPD and check that it matches analytical prediction
+    (for a perfect thin lens, OPD should be zero for all rays at focus)
+
+STEP 2: Implement OPD computation (on-axis only)
+  - Trace 256 rays from on-axis object point
+  - Identify chief ray (axial ray, index 0 or center of grid)
+  - Compute OPD_i = OPL_i - OPL_chief
+  - Verify: for a singlet at its paraxial focus, OPD should be
+    dominated by spherical aberration (quartic in pupil radius).
+    Plot OPD vs rho^2 -- should look roughly parabolic/quartic.
+
+STEP 3: Implement Zernike fitting
+  - Generate normalized pupil coordinates (rho, phi) for ray positions
+  - Build Zernike basis matrix Z_matrix (use library or implement)
+  - Precompute pinv(Z_matrix)
+  - Compute a = pinv_Z @ opd_vector
+  - Verify: for a known singlet, check that a_11 (spherical) is
+    dominant and has the expected sign. For biconvex vs meniscus,
+    a_11 should differ significantly.
+
+STEP 4: Standalone descriptor validation (NO CMA-MEGA yet)
+  - Sample 100-1000 random singlet configurations
+  - For each: compute Zernike descriptors [a_4, a_11]
+  - Plot the scatter: do biconvex, plano-convex, and meniscus forms
+    separate into distinct clusters in (a_4, a_11) space?
+  - If yes: the descriptors are meaningful. Proceed.
+  - If no: investigate why. Possible issues: wrong field angle,
+    wrong normalization, too few rays, numerical noise.
+
+STEP 5: Integrate Zernike descriptors into CMA-MEGA
+  - Replace compute_proxy_measures with Zernike computation
+  - Set archive bounds based on Step 4 scatter plot
+  - Run singlet archive with Zernike descriptors
+  - Compare against known singlet taxonomy:
+    Does the archive separate biconvex / plano-convex / meniscus?
+  - Compare QD-score and coverage vs proxy measures
+
+STEP 6: Gradient verification
+  - Use finite differences to verify that autodiff gradients of
+    Zernike coefficients w.r.t. theta are correct
+  - Compute: (zernike(theta + eps) - zernike(theta - eps)) / (2*eps)
+  - Compare with autodiff result
+  - Agreement should be within ~1e-4 relative error
+
+STEP 7: Expand to doublet
+  - Same pipeline, more parameters
+  - Check gradient normalization (magnitudes may differ more)
+  - Run doublet archive, examine if archive cells contain
+    recognizably different doublet forms
+
+---
+SECTION 6: KEY TECHNICAL REFERENCES
+---
+
+6.1 Zernike polynomial definitions:
+  Standard reference: Noll 1976, "Zernike polynomials and atmospheric
+  turbulence", JOSA. Defines the Noll ordering convention.
+  
+  ANSI standard ordering (Z1=piston, Z2=tilt, etc.) is also common.
+  Be consistent -- pick one convention and stick with it.
+
+  Analytical formulas for first 16 Zernike polynomials are tabulated
+  in any optics textbook (Mahajan, "Aberration Theory Made Simple";
+  Goodman, "Introduction to Fourier Optics").
+
+6.2 DQD / CMA-MEGA:
+  Fontaine & Nikolaidis, NeurIPS 2021, arXiv:2106.03894
+  "Differentiable Quality Diversity"
+  
+  Key details:
+  - CMA-MEGA (Adam) is the recommended variant
+  - Ranking by archive improvement, not raw fitness
+  - Coefficient space dimensionality = num_measures + 1
+
+6.3 pyribs library:
+  https://pyribs.org
+  - GridArchive: fixed-resolution uniform grid
+  - CVTArchive: centroidal Voronoi tessellation for higher dimensions
+  - ArchiveBase.add() returns improvement information
+
+6.4 Aperture-aware differentiable ray tracing:
+  Teh et al., SIGGRAPH 2024, "Aperture-Aware Lens Design"
+  - Relevant for making ray validity differentiable (smooth approximation)
+  - Not needed for initial implementation (use hard threshold instead)
+  - Consider for future refinement
+
+---
+SECTION 7: COMMON PITFALLS
+---
+
+7.1 OPD sign convention:
+  OPD can be defined as (actual path - reference path) or vice versa.
+  Be consistent. The Zernike coefficients will flip sign if you flip
+  the convention. This doesn't matter for the archive (it just mirrors
+  the descriptor space) but it matters for interpretation.
+
+7.2 Pupil sampling:
+  If rays are sampled on a square grid at the entrance pupil, some
+  rays will be outside the circular pupil (corners of the square).
+  These must be excluded from the Zernike fit, since Zernike polynomials
+  are only orthogonal over the unit disk.
+
+7.3 Ray failures:
+  Some rays may not reach the sensor (total internal reflection,
+  vignetting). These rays have no OPL and must be excluded from the
+  Zernike fit. This is handled by the f_invalid filtering: if too
+  many rays fail, reject the candidate. For candidates that pass,
+  fit Zernike to the surviving rays only. Note that this means
+  Z_matrix may need to be recomputed per candidate if the set of
+  valid rays varies. This complicates the "constant Z_matrix"
+  assumption. Workaround: use a fixed ray pattern and treat failed
+  rays as having NaN OPD; fit Zernike only to valid rays using
+  a masked least squares. Or: reject candidates with any failed
+  rays (strict threshold).
+
+7.4 Autodiff through variable-size operations:
+  If the number of valid rays varies per candidate, operations like
+  lstsq with variable input size may break batched autodiff (JAX vmap,
+  PyTorch batched operations). Workaround: pad with zeros and mask,
+  or use a fixed ray count and reject candidates with failures.
+
+7.5 Numerical scale of Zernike coefficients:
+  Zernike coefficients have units of the OPD (typically micrometers
+  or waves). Their magnitudes can range over several orders of magnitude
+  across different terms. Normalize or scale appropriately before
+  using as archive coordinates. The archive bounds must be set to
+  accommodate the actual range of values encountered.
+
+---
+SECTION 8: VERIFICATION CHECKLIST
+---
+
+Before considering the Zernike integration "done", verify:
+
+[ ] OPD computation matches known analytical result for thin lens
+[ ] Zernike fit recovers known coefficients for simple test cases
+[ ] Autodiff gradients match finite-difference gradients (within ~1e-4)
+[ ] Singlet archive with Zernike descriptors separates known design forms
+[ ] QD-score is comparable or better than proxy measure archive
+[ ] Archive coverage is meaningful (cells correspond to distinct behaviors)
+[ ] f_invalid is handled as insertion constraint, not measure
+[ ] Ranking signal uses archive improvement, not raw fitness
+[ ] Gradient normalization is applied to all measure gradients
+
+==============================================================
+END OF CONTEXT
+==============================================================

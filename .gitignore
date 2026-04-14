@@ -1,0 +1,61 @@
+# ===== External cloned repositories =====
+DeepLens/
+ray-optics/
+automated_lens_design/
+QGSO/
+OptiNeuro/
+
+# ===== Generated results & artifacts =====
+results/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# ===== Testing / Caching =====
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== IDE / Editor =====
+.claude/
+.cursor/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== Environment =====
+.env
+*.env
+venv/
+.venv/
+env/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Misc generated files =====
+*.log
+*.pkl
+*.pt
+*.pth
+*.ckpt
+*.h5
+wandb/
+runs/
