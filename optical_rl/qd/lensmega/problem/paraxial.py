@@ -107,6 +107,32 @@ class GeneralizedParaxialSolver:
         )
         return (-1.0 / safe_nu).squeeze()
 
+    def paraxial_pupil_radius(
+        self,
+        c_full: torch.Tensor,
+        aper_idx: int,
+        r_stop_mm: float,
+    ) -> torch.Tensor:
+        """Differentiable paraxial entrance-pupil radius.
+
+        Sends a unit-height parallel ray ``(y=1, nu=0)`` from object space
+        through surfaces ``[0, aper_idx)`` and reads ``y_at_stop``. By the
+        usual paraxial reciprocity the entrance-pupil radius is
+
+            r_pupil = r_stop / |y_at_stop|
+
+        because ``y_at_stop`` is the lateral magnification A11 of the front
+        group from object plane to stop plane. Gradients flow through
+        ``c_full``, so the F# soft penalty receives a meaningful descent
+        direction in θ. Mirrors the paraxial mode of ``calc_entrance_pupil``
+        but stays inside the autograd graph.
+        """
+        y, _ = self._walk(c_full, stop_exclusive=int(aper_idx))
+        safe_y = torch.where(
+            torch.abs(y) > 1e-6, y, torch.full_like(y, 1e-6)
+        )
+        return (float(r_stop_mm) / torch.abs(safe_y)).squeeze()
+
     def derive_curvature_for_efl(
         self,
         c_full: torch.Tensor,

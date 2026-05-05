@@ -1,0 +1,7 @@
+{
+  "host": "vcail-1.cs.unc.edu",
+  "run_dir": "/home/hisham26/Desktop/RL/experiments/gradient_alignment/run/gradient_alignment_triplet_20260504_025644",
+  "started_at": "2026-05-04T02:56:44",
+  "run_name": "gradient_alignment_triplet",
+  "package": "optical_rl.qd.lensmega"
+}

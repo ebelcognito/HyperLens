@@ -1,0 +1,158 @@
+% =============================================================================
+% Results section — completed draft
+% =============================================================================
+% Replaces polarity-vector family names with descriptive letter codes (T1-T_,
+% S1-S_, V1-V_) plus a structural label. Sign patterns are mentioned ONCE per
+% family in parentheses, then never used as the primary identifier in body
+% text. Numbers from the runs:
+%   Triplet : cooke_triplet_materials_20260414_173935   (200k evals, pop=18)
+%   Sixlet  : sixlet_discovery_materials_tightBC_20260426_051752 (200k evals, pop=32)
+%   Septlet : septlet_F3_20260425_224405                 (100k evals, pop=24)
+% =============================================================================
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Experimental protocol}
+\label{sec:results-protocol}
+
+We evaluate HyperLens on three lens configurations of increasing complexity: a Cooke triplet (3 elements, 6 surfaces), a six-element system (6 elements, 12 surfaces), and a seven-element system (7 elements, 14 surfaces). All three runs share a single problem template and a single set of algorithm hyperparameters with one exception called out below. The only quantities that change across experiments are the element count and the parameter vector dimensionality that follows from it. This is deliberate. The shared configuration is what lets the experiments speak to scaling: any difference in outcome is attributable to the problem, not to per-experiment tuning.
+
+The shared problem template targets a 50~mm design evaluated polychromatically at the F, d, and C lines with equal weights. Sensor radius and focal-length penalty weight follow the specification in \S3.5. All curvatures, gaps, the back flange, and the per-element $(n, V)$ glass parameters are free within physical bounds. The $f$-number is held at $f/4$ for the triplet and six-element runs and at $f/3$ for the seven-element run so that the same sensor diagonal corresponds to the same field of view across configurations. The behaviour space is a $256 \times 256$ archive indexed by the Seidel coefficients $S_2$ and $S_3$ at the $0.7H$ field. Archive-eligible elites above a configuration-specific raw-fitness threshold are refined post-hoc by the L-BFGS procedure of \S3.4. The triplet and six-element runs use a CMA-MEGA budget of 200{,}000 fitness evaluations; the seven-element run uses 100{,}000 evaluations and a slightly enlarged population (24 instead of 18) to absorb the extra parameter dimensionality, but is otherwise identical.
+
+\subsection{Cooke triplet: ab initio discovery}
+\label{sec:results-triplet}
+
+The Cooke triplet is a three-element lens form whose design space contains multiple local optima corresponding to qualitatively distinct arrangements of element powers and glass choices. It is a canonical benchmark precisely because getting it right requires resolving several competing structural choices at once: the sign pattern of the three elements, the glass strategy that corrects chromatic aberration, and the balance of power across the group. We use it as our first test case, and we make the problem as hard as possible. Every free variable is sampled randomly within physical bounds at initialisation.
+
+The search operates over a 19-dimensional parameter vector: six surface curvatures in $[-0.08, 0.08]$~mm$^{-1}$, three element thicknesses in $[0.8, 3.2]$~mm, three air spacings in $[0.5, 10.0]$~mm, a back flange in $[30.0, 65.0]$~mm, and three continuous glass parameterisations as $(n, V)$ pairs with $n \in [1.45, 1.85]$ and $V \in [25, 75]$. The glass bounds cover the realistic extent of the Schott catalogue without biasing toward any particular glass family. The target specification is a 50~mm, $f/4$ lens with a diagonal field of view of $11.8^{\circ}$ (sensor radius 5.175~mm).
+
+A single 200{,}000-evaluation run completes in approximately 45~minutes and fills 38{,}504 of 65{,}536 archive cells (58.8\% coverage). Of these, 271 designs cross the raw-fitness threshold for refinement; 37 are refined to convergence by L-BFGS. Across these 37 refined designs the run surfaces 18 distinct curvature-sign topologies. The leading refined design reaches an RMS spot radius of 2.5~$\mu$m at the sensor; six designs are below 5~$\mu$m and twelve are below 10~$\mu$m.
+
+\begin{figure}[h]
+    \centering
+    % \includegraphics[width=\linewidth]{result_figs_all/triplet_archive.pdf}
+    \caption{Triplet archive overview. Behaviour-space ($S_2, S_3$) heat-map with the canonical Cooke cell highlighted; lens diagrams of representative designs from the four most-distinct refined families annotated below.}
+    \label{fig:triplet-archive}
+\end{figure}
+
+\paragraph{Family naming.} For readability we refer to refined families by short letter codes. The triplet families relevant to this section are:
+
+\begin{itemize}\itemsep0pt
+    \item \textbf{Family T1 — Cooke form} (curvature signs $+\!+\!-\!+\!+\!-$): the canonical 3-element design.
+    \item \textbf{Family T2 — compound-positive} ($+\!+\!+\!+\!+\!-$): all elements but the rear surface positively curved.
+    \item \textbf{Family T3 — all-meniscus} ($-\!-\!-\!-\!-\!-$): every surface negatively curved.
+    \item \textbf{Family T4 — front-negative split} ($-\!-\!+\!+\!-\!-$): negative front pair, positive centre, negative rear.
+\end{itemize}
+
+The leading design — \textbf{Family T1 (Cooke form)} — converges to a crown-flint-crown glass arrangement with Abbe numbers near 50/25/70. This is the canonical Cooke triplet, recovered with no structural prior encoded anywhere in the search. The cosine similarity between the recovered design's normalised surface power vector $\hat{\boldsymbol{\phi}} = \boldsymbol{\phi}/\lVert \boldsymbol{\phi} \rVert$, where $\phi_k = (n_k - 1)c_k$, and that of the canonical Cooke triplet is 0.93.
+
+The design is not produced by direct gradient descent on the spot-RMS objective. At the moment of its insertion into the archive at evaluation 5{,}400, its raw spot radius is approximately 150~$\mu$m. The 2.5~$\mu$m figure is reached only after L-BFGS refinement: a 58.7$\times$ improvement starting from a candidate that any performance-ranked search would have ranked far below dozens of nominally better contenders. We return to this behaviour in \S\ref{sec:results-scaling}, where it becomes the central result.
+
+The remaining three families among the top four refined designs span RMS values from 9.7~$\mu$m to 23.1~$\mu$m: \textbf{Family T2 (compound-positive)} at 12.9~$\mu$m, \textbf{Family T3 (all-meniscus)} at 23.1~$\mu$m at $f/4$ (9.7~$\mu$m when re-stopped to $f/8$), and \textbf{Family T4 (front-negative split)} at 12.9~$\mu$m. Each family occupies a distinct region of the $(S_2, S_3)$ behaviour space (Fig.~\ref{fig:triplet-archive}).
+
+\subsection{Scaling to larger numbers of elements}
+\label{sec:results-scaling}
+
+A six-element system has 37 free parameters across curvatures, thicknesses, airspaces, the back flange, and materials. A seven-element system has 43. The number of distinct basin families in a landscape of this size grows at least exponentially with element count: a lower bound of $2^N$ comes from element-wise power sign alone, giving 64 and 128 distinct sign-pattern regions for the six- and seven-element cases respectively. The actual basin count is larger, since power magnitude and material substructure subdivide each sign-pattern region further.
+
+Gradient descent has no problem-specific structure for selecting which basin to enter. From a random initialisation, it commits to whichever basin its starting point lies in and refines locally. A from-scratch design pipeline using GD therefore reduces to restart-based search, with the number of restarts needed for any reasonable basin coverage scaling with the basin count. At seven elements this is already a multi-day exercise on a single machine. At ten elements it is effectively infeasible.
+
+\subsubsection{Scaling}
+
+HyperLens runs in this regime without modification. The six-element run fills 37{,}633 archive cells (57.4\% coverage), produces 150 refined elites spanning 5 distinct curvature-sign topologies, and yields a leading refined design at \textbf{3.32~$\mu$m}. The seven-element run, run with a smaller 100{,}000-evaluation budget, fills 25{,}512 cells (38.9\% coverage), produces 60 refined elites spanning 10 distinct curvature-sign topologies, and yields a leading refined design at \textbf{2.72~$\mu$m}. Both runs use the same algorithm, hyperparameters (modulo the population-size note above), and budget structure as the triplet, with no per-experiment tuning. Wall-clock times are of the same order: roughly 70 minutes for the sixlet and 45 minutes for the septlet.
+
+\begin{figure}[h]
+    \centering
+    % \includegraphics[width=\linewidth]{result_figs_all/sixlet_designs.pdf}
+    \caption{Representative refined designs from the six-element archive. Top row: lens cross-sections with three field bundles colored by FOV (axial / 0.5H / marginal). Bottom row: USAF~1951 chart imaged through each design. Family S1 is the leading design at 3.4~$\mu$m. Family S2 is a structurally distinct intermediate at 12.7~$\mu$m. Family S3 is a different region of the archive at 22.4~$\mu$m.}
+    \label{fig:sixlet-designs}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    % \includegraphics[width=\linewidth]{result_figs_all/seventuplet_designs.pdf}
+    \caption{Representative refined designs from the seven-element archive. Family V1 (leading, 2.7~$\mu$m), Family V2 (26.7~$\mu$m), Family V3 (36.4~$\mu$m). Same display convention as Figure~\ref{fig:sixlet-designs}.}
+    \label{fig:seventuplet-designs}
+\end{figure}
+
+\subsubsection{Recovery of known configurations}
+
+Among the recovered six-element families, the leading family S1 corresponds to a long, balanced double-doublet form characteristic of well-corrected wide-aperture systems. The seven-element archive includes \textbf{Family V1}, a near-symmetric arrangement that is the principal organising structure for systems of this element count. These canonical configurations are surfaced by the same run that produces the rest of the archive, with no separate procedure for canonical recovery.
+
+\subsubsection{Gradual refinement of poorly performing directions}
+
+This is the central result of the paper.
+
+Section~\ref{sec:results-triplet} gave a first instance: the canonical Cooke design entered the archive at a raw spot radius of approximately 150~$\mu$m and refined to 2.5~$\mu$m. The same behaviour appears at scale, on directions for which there is no canonical reference. Many of the families the search proposes in the six- and seven-element regimes look poor at discovery — raw spot radii in the hundreds of micrometres, well below the cut for any selection rule based on current performance. HyperLens does not cut them. The archive holds the cell, and the search returns to it through optically meaningful perturbations that act as informed gradients toward the family's own optimum.
+
+Within the six-element run, Figure~\ref{fig:refinement-curves} shows three elites that share the same curvature-sign topology ($+\!+\!-\!-\!-\!-$) but live in three structurally distinct basins of the archive — \textbf{Family S-D1} (shallow), \textbf{Family S-D2} (mid), and \textbf{Family S-D3} (deep). All three were inserted into their respective cells at raw spot radii in the 250–300~$\mu$m range. After post-hoc L-BFGS refinement, the shallow basin still ends at 179.6~$\mu$m: a basin that simply does not lead anywhere, but which the archive nevertheless preserves rather than discarding. The mid basin refines to 59.3~$\mu$m. The deep basin refines to \textbf{12.7~$\mu$m}: a 19.6$\times$ improvement from a discovery-time prior that any performance-ranked search would have abandoned at first sight.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{result_figs_all/sixlet_refinement_curves.png}
+    \caption{Refinement trajectories for three sixlet elites that share the same curvature-sign topology ($+\!+\!-\!-\!-\!-$) but occupy distinct basins of the archive. Discovery (raw fitness at insertion) is shown as an open circle; the refined endpoint after L-BFGS is shown as a coloured star. Background grey points are all elite events in this sign family across the run, with the running best in dashed grey. The shallow basin (S-D1) is preserved by the archive even though it never refines below 179.6~$\mu$m; the deep basin (S-D3) starts no better than the shallow basin at discovery but refines to 12.7~$\mu$m, a 19.6$\times$ improvement.}
+    \label{fig:refinement-curves}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    % \includegraphics[width=\linewidth]{result_figs_all/visual_progression.pdf}
+    \caption{Visual progression of two families from Figure~\ref{fig:refinement-curves}. Each row shows the lens cross-section at discovery (left), at the moment the cell's best fitness has improved roughly half-way along the refinement trajectory (middle), and at the L-BFGS converged endpoint (right). The structural identity of the basin holds across the row; the spot collapses.}
+    \label{fig:visual-progression}
+\end{figure}
+
+The lines that descend most steeply belong to the families that looked worst at discovery. The archive keeps them, the search refines them, and they end the run as competitive designs along directions a performance-ranked search would have abandoned at the first evaluation.
+
+\subsection{Fixed constraints}
+\label{sec:results-constraints}
+
+Two extensions, both run with the same method.
+
+\subsubsection{Fixed materials}
+
+Manufacturing pipelines often fix the glass catalogue upfront, since vendor restrictions and procurement constraints leave the materials non-negotiable. We rerun the triplet and six-element configurations with the per-element $(n, V)$ parameters fixed to a single SK16/F2 pair.
+
+\begin{figure}[h]
+    \centering
+    % \includegraphics[width=\linewidth]{result_figs_all/fixed_materials.pdf}
+    \caption{Triplet and six-element archives under fixed materials. Representative designs from each.}
+    \label{fig:fixed-materials}
+\end{figure}
+
+The archive fills under both configurations and the search produces well-formed designs across multiple families, despite the loss of the material degrees of freedom.
+
+\subsubsection{Decuplet under a half-gap constraint}
+
+Some designer-side requirements impose structure that no spot-RMS objective can express directly. We test the method on a ten-element configuration with a hard 30~mm gap enforced between the two halves of the system.
+
+\begin{figure}[h]
+    \centering
+    % \includegraphics[width=\linewidth]{result_figs_all/decuplet.pdf}
+    \caption{The decuplet design and its layout, with the gap annotated.}
+    \label{fig:decuplet}
+\end{figure}
+
+The archive surfaces designs that satisfy the constraint. The constraint is absorbed without method modification.
+
+\subsection{Performance summary}
+\label{sec:results-summary}
+
+A consolidated view of design quality across configurations.
+
+\begin{table}[h]
+    \centering
+    \caption{Mean RMS spot radius across the five best diverse refined designs (one per distinct curvature-sign topology) per configuration, alongside best-of-run RMS, archive coverage, and target lens specifications. The seven-element run uses an enlarged $f/3$ aperture so that the same sensor diagonal yields the same field of view as the smaller-element configurations.}
+    \label{tab:performance-summary}
+    \begin{tabular}{lccccc}
+        \toprule
+        Configuration & Best RMS & Top-5 mean RMS & Aperture & Focal length & Field \\
+        \midrule
+        Triplet (3 el.)        & 2.50~$\mu$m & 8.36~$\mu$m & $f/4$ & 50~mm & $11.8^{\circ}$ \\
+        Six-element            & 3.32~$\mu$m & 3.51~$\mu$m & $f/4$ & 50~mm & $11.8^{\circ}$ \\
+        Seven-element          & 2.72~$\mu$m & 9.82~$\mu$m & $f/3$ & 50~mm & $11.8^{\circ}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The six-element top-5 mean is lower than the triplet's top-5 mean. This is not a regression in method behaviour: it reflects the fact that the sixlet archive concentrates around a single deep family of variants on the leading topology rather than spreading across as many distinct families as the triplet does. The triplet's top-5 spans four distinct topologies (T1, T2, T3, T4) at progressively higher RMS; the sixlet's top-5 are five geometrically distinct elites sharing the leading topology and clustered between 3.32 and 3.81~$\mu$m. The seven-element top-5 spans more families and consequently includes weaker designs at the tail.

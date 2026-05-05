@@ -1,0 +1,289 @@
+{
+  "problem": {
+    "kind": "lens",
+    "lens_path": "/home/hisham26/Desktop/RL/DeepLens/datasets/lenses/sixlet_50mm_f4.json",
+    "wavelength_um": 0.587,
+    "fitness_wavelengths_um": [
+      0.486,
+      0.587,
+      0.656
+    ],
+    "object_depth_mm": -20000.0,
+    "stop_surface_index": 6,
+    "free_curvature_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "derived_curvature_index": null,
+    "focal_length_target_mm": 50.0,
+    "theta_bounds": [
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        1.5,
+        5.0
+      ],
+      [
+        0.5,
+        15.0
+      ],
+      [
+        1.5,
+        5.0
+      ],
+      [
+        0.5,
+        15.0
+      ],
+      [
+        1.0,
+        4.0
+      ],
+      [
+        0.5,
+        10.0
+      ],
+      [
+        0.5,
+        10.0
+      ],
+      [
+        1.0,
+        4.0
+      ],
+      [
+        0.5,
+        15.0
+      ],
+      [
+        1.5,
+        5.0
+      ],
+      [
+        0.5,
+        15.0
+      ],
+      [
+        1.5,
+        5.0
+      ],
+      [
+        20.0,
+        60.0
+      ],
+      [
+        1.45,
+        1.85
+      ],
+      [
+        25.0,
+        75.0
+      ],
+      [
+        1.45,
+        1.85
+      ],
+      [
+        25.0,
+        75.0
+      ],
+      [
+        1.45,
+        1.85
+      ],
+      [
+        25.0,
+        75.0
+      ],
+      [
+        1.45,
+        1.85
+      ],
+      [
+        25.0,
+        75.0
+      ],
+      [
+        1.45,
+        1.85
+      ],
+      [
+        25.0,
+        75.0
+      ],
+      [
+        1.45,
+        1.85
+      ],
+      [
+        25.0,
+        75.0
+      ]
+    ],
+    "stage": "stage2",
+    "num_rays": 128,
+    "invalid_tol": 0.2,
+    "invalid_penalty_weight": 5.0,
+    "intersect_penalty_weight": 1.0,
+    "air_min_mm": 0.1,
+    "thick_min_mm": 0.5,
+    "strict_entrance_pupil": false,
+    "descriptor_field_index": 1,
+    "parameterization": "full_dof",
+    "efl_penalty_weight": 10.0,
+    "free_gap_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "variable_flange": true,
+    "flange_bounds": null,
+    "variable_materials": true,
+    "free_material_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "cemented_interfaces": [],
+    "field_weights": null,
+    "enforce_fnum": false,
+    "f_number_target": 4.0,
+    "fnum_penalty_weight": 1.0
+  },
+  "descriptor": {
+    "kind": "seidel",
+    "params": {
+      "terms": [
+        "S2",
+        "S3"
+      ]
+    }
+  },
+  "algorithm": {
+    "population_size": 18,
+    "initial_sigma": 0.5,
+    "cma_eta": 0.1,
+    "cma_seed": 42,
+    "seed_count": 1000,
+    "calibration_count": 1000,
+    "iterations": 50000,
+    "new_cell_bonus": 1000000.0,
+    "scale_bonus_by_fitness": false,
+    "bonus_fitness_threshold": 0.0,
+    "bonus_fitness_scale": 1.0,
+    "log_every": 50,
+    "restart_patience": 2,
+    "fitness_patience": 0,
+    "fitness_improve_eps": 1e-06,
+    "ablate_gradients": false
+  },
+  "archive": {
+    "bins": [
+      256,
+      256
+    ],
+    "bounds": [
+      [
+        -9.46,
+        1.83
+      ],
+      [
+        -84.43,
+        10.41
+      ]
+    ],
+    "bound_calibration_pad": 0.05,
+    "bound_calibration_pct": [
+      2.0,
+      98.0
+    ]
+  },
+  "io": {
+    "results_dir": "/home/hisham26/Desktop/RL/experiments/gradient_alignment/sixlet_run",
+    "run_name": "gradient_alignment_sixlet",
+    "checkpoint_every": 200,
+    "parallel_workers": 18,
+    "device": "auto",
+    "log_seed_accepts": true,
+    "elite_fitness_threshold": null,
+    "refine_efl_penalty_weight": null,
+    "refine_invalid_penalty_weight": null,
+    "refine_intersect_penalty_weight": null,
+    "refine_fnum_penalty_weight": 5.0,
+    "refine_lbfgs_max_steps": 100,
+    "refine_lbfgs_lr": 0.5,
+    "refine_field_weights": null,
+    "refine_converge_tol": 0.0001,
+    "refine_stability_samples": 20,
+    "refine_stability_perturbation": 0.01,
+    "log_gradients": true
+  }
+}

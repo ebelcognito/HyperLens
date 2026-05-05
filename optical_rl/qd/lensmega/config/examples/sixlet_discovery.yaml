@@ -66,7 +66,7 @@ problem:
     - [0.5, 15.0]        # g10  Air gap E5→E6
     - [1.5, 5.0]         # g11  E6 thickness (crown glass)
     # --- flange (last surface to sensor) ---
-    - [10.0, 60.0]       # flange
+    - [20.0, 60.0]       # flange
 
   stage: stage2
   num_rays: 128
@@ -97,7 +97,7 @@ algorithm:
 
 archive:
   bins: [256, 256]
-  bounds: null
+  bounds: [[-0.001, 0.001], [-0.001, 0.001]]
   bound_calibration_pad: 0.05
 
 io:
@@ -105,7 +105,7 @@ io:
   run_name: sixlet_discovery
   checkpoint_every: 100
   device: auto
-  elite_fitness_threshold: -0.5
+  elite_fitness_threshold: -1
   refine_lbfgs_max_steps: 100
   refine_lbfgs_lr: 0.5
   refine_converge_tol: 0.0001

@@ -21,7 +21,7 @@
 
 problem:
   kind: lens
-  lens_path: DeepLens/datasets/lenses/camera/ef50mm_f1.8.json
+  lens_path: /home/hisham26/Desktop/RL/DeepLens/datasets/lenses/camera/ef50mm_f1.8.json
   wavelength_um: 0.587
   fitness_wavelengths_um: [0.486, 0.587, 0.656]
   object_depth_mm: -20000.0
@@ -37,18 +37,18 @@ problem:
   variable_flange: true
 
   theta_bounds:
-    # --- 11 curvatures (moderate bounds around EF50 reference) ---
-    - [-0.010, 0.065]    # c0   ref=+0.029  E1 front (positive meniscus)
-    - [-0.035, 0.035]    # c1   ref=+0.004  E1 back (weak)
-    - [-0.010, 0.080]    # c2   ref=+0.047  E2 front (strong positive)
-    - [-0.020, 0.060]    # c3   ref=+0.025  E2 back (moderate)
-    - [-0.030, 0.045]    # c4   ref=+0.013  E3 front (weak)
-    - [+0.020, 0.095]    # c5   ref=+0.065  E3 back (strong positive)
-    - [-0.095, -0.020]   # c7   ref=-0.063  cemented doublet front (strong negative)
-    - [-0.030, 0.040]    # c8   ref=+0.007  cemented interface (weak)
-    - [-0.080, -0.010]   # c9   ref=-0.047  cemented doublet back (strong negative)
-    - [-0.025, 0.035]    # c10  ref=+0.006  E6 front (weak)
-    - [-0.055, 0.015]    # c11  ref=-0.020  E6 back (moderate negative)
+    # --- 11 curvatures (tight bounds around EF50 reference) ---
+    - [+0.009, 0.049]    # c0   ref=+0.029  E1 front (positive meniscus)
+    - [-0.016, 0.024]    # c1   ref=+0.004  E1 back (weak)
+    - [+0.027, 0.067]    # c2   ref=+0.047  E2 front (strong positive)
+    - [+0.005, 0.045]    # c3   ref=+0.025  E2 back (moderate)
+    - [-0.007, 0.033]    # c4   ref=+0.013  E3 front (weak)
+    - [+0.045, 0.085]    # c5   ref=+0.065  E3 back (strong positive)
+    - [-0.083, -0.043]   # c7   ref=-0.063  cemented doublet front (strong negative)
+    - [-0.013, 0.027]    # c8   ref=+0.007  cemented interface (weak)
+    - [-0.067, -0.027]   # c9   ref=-0.047  cemented doublet back (strong negative)
+    - [-0.014, 0.026]    # c10  ref=+0.006  E6 front (weak)
+    - [-0.040, 0.000]    # c11  ref=-0.020  E6 back (moderate negative)
     # --- 11 gaps (around EF50 nominal) ---
     # NOTE: EF50 is f/1.8 with large aperture (r=15.5mm) — thick elements
     # are physically required for edge clearance. Don't cap at 3.2mm here.
@@ -82,19 +82,19 @@ descriptor:
     terms: ["S2", "S3"]
 
 algorithm:
-  population_size: 18
+  population_size: 50
   initial_sigma: 0.5
-  cma_eta: 0.1
+  cma_eta: 0.15
   cma_seed: 42
   seed_count: 500
   calibration_count: 500
   iterations: 200000
   new_cell_bonus: 1.0e6
   log_every: 50
-  restart_patience: 5
+  restart_patience: 2
 
 archive:
-  bins: [256, 256]
+  bins: [512, 512]
   bounds: [[-0.001, 0.001], [-0.001, 0.001]]
   bound_calibration_pad: 0.05
 
@@ -107,5 +107,6 @@ io:
   refine_lbfgs_max_steps: 100
   refine_lbfgs_lr: 0.5
   refine_converge_tol: 0.0001
+  refine_field_weights: [1.0, 2.0, 4.0]
   refine_stability_samples: 30
   refine_stability_perturbation: 0.005

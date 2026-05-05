@@ -35,6 +35,10 @@ class LensTemplate:
     json_path: str
     entrance_pupil_z: float
     entrance_pupil_r: float
+    element_groups: Tuple[Tuple[int, ...], ...] = ()
+    element_n_d: Tuple[float, ...] = ()
+    element_V_d: Tuple[float, ...] = ()
+    cemented_interfaces: Tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
         n = len(self.surfaces)
@@ -71,6 +75,7 @@ def load_lens_template(
     derived_curvature_index: Optional[int] = None,
     device: str = "cpu",
     name: Optional[str] = None,
+    cemented_interfaces: Tuple[int, ...] = (),
 ) -> Tuple[LensTemplate, GeoLens]:
     lens = GeoLens(filename=json_path, device=device)
 
@@ -154,6 +159,52 @@ def load_lens_template(
         float(lens.d_sensor.item()), dtype=torch.float64, device=device
     )
 
+    # Detect glass elements: group consecutive non-air, non-stop surfaces.
+    # When a surface is listed in ``cemented_interfaces``, it acts as the BACK
+    # of the current element AND the FRONT of the next element, so the search
+    # gets independent (n, V) pairs on each side of the cement.  This is the
+    # mechanism that turns a "single thick element with a ghost cement DOF"
+    # into a real achromatic doublet whose interface curvature is optically
+    # active.  Empty list (default) → original single-glass-per-element
+    # behaviour, byte-identical to before this change.
+    cement_set = set(int(i) for i in cemented_interfaces)
+    element_groups: list[Tuple[int, ...]] = []
+    element_n_d: list[float] = []
+    element_V_d: list[float] = []
+    i_elem = 0
+    while i_elem < num_surfaces:
+        s = surfaces[i_elem]
+        if s.is_stop or abs(s.n_after - 1.0) < 0.01:
+            i_elem += 1
+            continue
+        # Start of an element: surface entering glass (n_after != 1.0)
+        group = [i_elem]
+        glass_n = s.n_after
+        glass_V = float(lens.surfaces[i_elem].mat2.V) if hasattr(lens.surfaces[i_elem].mat2, "V") else 50.0
+        j = i_elem + 1
+        split_at_cement = False
+        while j < num_surfaces:
+            sj = surfaces[j]
+            if sj.is_stop:
+                j += 1
+                continue
+            group.append(j)
+            if abs(sj.n_after - 1.0) < 0.01:
+                break  # exited to air
+            if j in cement_set:
+                # Cement boundary: end this sub-element here.  Surface j is
+                # the BACK of the current group (its n_bef gets glass_curr in
+                # _build_n_full) AND will become the FRONT of the next group
+                # (its n_aft gets glass_next).  The next outer-loop iteration
+                # must restart at j (not j+1) so it appears in both groups.
+                split_at_cement = True
+                break
+            j += 1
+        element_groups.append(tuple(group))
+        element_n_d.append(glass_n)
+        element_V_d.append(glass_V)
+        i_elem = j if split_at_cement else j + 1
+
     template = LensTemplate(
         name=name or json_path,
         surfaces=tuple(surfaces),
@@ -167,5 +218,9 @@ def load_lens_template(
         json_path=json_path,
         entrance_pupil_z=entr_z,
         entrance_pupil_r=entr_r,
+        element_groups=tuple(element_groups),
+        element_n_d=tuple(element_n_d),
+        element_V_d=tuple(element_V_d),
+        cemented_interfaces=tuple(int(i) for i in cemented_interfaces),
     )
     return template, lens

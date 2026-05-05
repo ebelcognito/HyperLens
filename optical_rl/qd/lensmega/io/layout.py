@@ -47,5 +47,9 @@ class RunPaths:
         return self.root / "trajectory.csv"
 
     @property
+    def lineage(self) -> Path:
+        return self.root / "lineage.jsonl"
+
+    @property
     def log(self) -> Path:
         return self.root / "log.txt"

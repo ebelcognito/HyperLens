@@ -1,0 +1,52 @@
+{
+  "experiment": "gradient_alignment_§3.2",
+  "purpose": "Empirical cosine similarity between -∇_θ L and ∇_θ M_j across CMA-MEGA search",
+  "config_yaml": "experiments/gradient_alignment/config.yaml",
+  "lens": {
+    "topology": "Cooke triplet (3 elements)",
+    "lens_template": "DeepLens/datasets/lenses/cooke_smaller_ap_1mm.json",
+    "theta_dim": 19,
+    "free_dof": "6 curvatures + 6 gaps + 1 flange + 3 (n,V) = 19",
+    "focal_length_mm": 50.0,
+    "polychromatic_um": [0.486, 0.587, 0.656]
+  },
+  "descriptor": {
+    "kind": "seidel",
+    "terms": ["S2", "S3"],
+    "dim": 2
+  },
+  "algorithm": {
+    "population_size": 36,
+    "seed_count": 2000,
+    "calibration_count": 2000,
+    "iterations": 50000,
+    "initial_sigma": 0.5,
+    "cma_eta": 0.15,
+    "cma_seed": 42,
+    "restart_patience": 2
+  },
+  "archive": {
+    "bins": [200, 200],
+    "bounds": [[-0.001, 0.001], [-0.001, 0.001]]
+  },
+  "logging": {
+    "log_gradients": true,
+    "output": "experiments/gradient_alignment/run/<run_name>/gradient_log.npz",
+    "schema": {
+      "evals": "(N,) int64 — completed evaluation count at each generation",
+      "generations": "(N,) int64 — generation index",
+      "thetas": "(N, 19) float64 — parent theta_μ",
+      "grad_fitness": "(N, 19) float64 — raw ∇_θ fitness  (note: -∇_θ L)",
+      "grad_m": "(N, 2, 19) float64 — raw ∇_θ M_j for j=0,1 (S2, S3)",
+      "fitness": "(N,) float64 — fitness value at parent (= -L − penalties)"
+    }
+  },
+  "sign_convention": {
+    "loss_definition": "L = -fitness  (fitness = -rms_mean − penalties)",
+    "descent_direction": "-∇_θ L = +∇_θ fitness = grad_fitness in log",
+    "cosine_similarity": "cos(grad_fitness, grad_m_j) = cos(-∇L, ∇M_j)"
+  },
+  "random_seed": 42,
+  "platform": "Linux 6.8.0-100-generic, 20 cores",
+  "torch_version": "2.5.1+cu121"
+}

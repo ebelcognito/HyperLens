@@ -1,0 +1,35 @@
+{
+  "n_samples_per_phase": 100,
+  "seed": {
+    "rms_after_min": 9.999999999999997e-07,
+    "rms_after_median": 0.024763444512412275,
+    "rms_after_max": 40.90718730566946,
+    "rms_after_p25": 0.017393929140271942,
+    "rms_after_p75": 2.814678079902006
+  },
+  "offspring": {
+    "rms_after_min": 9.999999999999997e-07,
+    "rms_after_median": 0.02435454525543124,
+    "rms_after_max": 11.76211808119512,
+    "rms_after_p25": 0.01576257685461148,
+    "rms_after_p75": 6.029768040167685
+  },
+  "fraction_below_threshold": {
+    "0.05": {
+      "seed": 0.66,
+      "offspring": 0.68
+    },
+    "0.02": {
+      "seed": 0.38,
+      "offspring": 0.39
+    },
+    "0.01": {
+      "seed": 0.08,
+      "offspring": 0.1
+    },
+    "0.005": {
+      "seed": 0.05,
+      "offspring": 0.04
+    }
+  }
+}

@@ -8,6 +8,7 @@ from ..archive.calibration import percentile_bounds
 from ..archive.grid import GridArchive
 from ..config.schema import AlgorithmCfg, ArchiveCfg, IOCfg
 from .cpu_pool import CPUWorkerPool
+from .lineage import LineageLogger
 
 
 class Seeder:
@@ -20,11 +21,13 @@ class Seeder:
         archive_cfg: ArchiveCfg,
         io_cfg: IOCfg,
         pool: Optional[CPUWorkerPool] = None,
+        lineage: Optional[LineageLogger] = None,
     ) -> None:
         self.alg = alg_cfg
         self.archive_cfg = archive_cfg
         self.io = io_cfg
         self.pool = pool
+        self.lineage = lineage
 
     # ------------------------------------------------------------------
 
@@ -41,14 +44,40 @@ class Seeder:
         n = int(self.alg.calibration_count)
         thetas = problem.sample_theta(n, seed=self.alg.cma_seed + 9001)
         results = self._evaluate_many(problem, thetas)
+        if self.lineage is not None:
+            for r in results:
+                if r is None:
+                    continue
+                self.lineage.log(
+                    source="calibration",
+                    gen=0,
+                    parent_theta_hash=None,
+                    result=r,
+                    insert_status=0,
+                    archive=None,
+                )
+        # IMPORTANT: filter out pathological designs before computing BC
+        # bounds.  BFL-negative and invalid-ray-heavy designs produce
+        # pathological Seidel values (orders of magnitude larger than any
+        # real lens), and letting them into the percentile calculation
+        # inflates the archive bounds so badly that good lenses collapse
+        # into a sub-pixel region of the grid.  See paper §"Behaviour-
+        # space calibration must be physics-aware".
         valid = [
             r for r in results
             if r.metrics.get("rejected", 0.0) == 0.0
+            and r.metrics.get("rejected_bfl", 0.0) == 0.0
+            and r.metrics.get("rejected_pupil", 0.0) == 0.0
+            and r.metrics.get("invalid_fraction", 1.0) < 0.2
             and np.isfinite(r.fitness)
+            and np.all(np.isfinite(np.asarray(r.measures)))
         ]
         if len(valid) < max(16, n // 8):
             raise RuntimeError(
-                f"calibration produced too few valid designs: {len(valid)}/{n}"
+                f"calibration produced too few valid designs: "
+                f"{len(valid)}/{n}.  (Filter requires rejected=0, "
+                f"rejected_bfl=0, rejected_pupil=0, invalid_fraction<0.2, "
+                f"finite fitness and measures.)"
             )
         measures_nd = np.stack([np.asarray(r.measures) for r in valid])
         bounds = percentile_bounds(
@@ -83,15 +112,42 @@ class Seeder:
                     rejected_pupil += 1
                 if r.metrics.get("rejected_bfl", 0.0) > 0.0:
                     rejected_bfl += 1
+                if self.lineage is not None:
+                    self.lineage.log(
+                        source="seed",
+                        gen=0,
+                        parent_theta_hash=None,
+                        result=r,
+                        insert_status=0,
+                        archive=archive,
+                    )
                 continue
             if not np.isfinite(r.fitness):
                 rejected += 1
+                if self.lineage is not None:
+                    self.lineage.log(
+                        source="seed",
+                        gen=0,
+                        parent_theta_hash=None,
+                        result=r,
+                        insert_status=0,
+                        archive=archive,
+                    )
                 continue
             code = archive.insert(r)
             if code == 2:
                 inserted_new += 1
             elif code == 1:
                 inserted_rep += 1
+            if self.lineage is not None:
+                self.lineage.log(
+                    source="seed",
+                    gen=0,
+                    parent_theta_hash=None,
+                    result=r,
+                    insert_status=int(code),
+                    archive=archive,
+                )
             if self.io.log_seed_accepts and code > 0:
                 print(
                     f"[seed] insert code={code} fitness={r.fitness:.4g} "

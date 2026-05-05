@@ -59,3 +59,13 @@ Thumbs.db
 *.h5
 wandb/
 runs/
+
+# ===== Backup files =====
+*.bak
+*.bak-*
+
+# ===== Per-run outputs in experiments/ (regenerable; too large for git) =====
+experiments/**/lineage.jsonl
+experiments/**/archive_cells.json
+experiments/**/gradient_log.npz
+experiments/**/checkpoint*

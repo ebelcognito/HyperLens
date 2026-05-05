@@ -226,6 +226,25 @@ class PowerBudgetLensProblem(LensProblem):
         efl_penalty = self._efl_penalty_weight * efl_error_rel ** 2
         fitness = fitness - efl_penalty
 
+        # Soft F-number penalty (gated by enforce_fnum). Differentiable
+        # through curvatures via the paraxial walk; skipped entirely when
+        # disabled so legacy configs are bit-identical.
+        fnum_actual_t = None
+        fnum_dev_t = None
+        fnum_penalty_t = None
+        if self.cfg.enforce_fnum:
+            aper_idx = self.template.stop_index
+            r_stop_mm = float(lens.surfaces[aper_idx].r)
+            pupilr_diff = self.solver.paraxial_pupil_radius(
+                c_full, aper_idx, r_stop_mm
+            )
+            fnum_actual_t = efl_actual / (2.0 * pupilr_diff)
+            # Relative error, matches the EFL penalty's dimensionless form.
+            fnum_target = float(self.cfg.f_number_target)
+            fnum_dev_t = (fnum_actual_t - fnum_target) / fnum_target
+            fnum_penalty_t = self.cfg.fnum_penalty_weight * fnum_dev_t ** 2
+            fitness = fitness - fnum_penalty_t
+
         # Descriptor.
         field_y_deg = float(field_pts[self.cfg.descriptor_field_index][1])
         m_t = self.descriptor.compute(
@@ -234,12 +253,22 @@ class PowerBudgetLensProblem(LensProblem):
             object_depth_mm=self.cfg.object_depth_mm,
             wavelength_um=self.cfg.wavelength_um,
             device=device,
+            theta_tensor=theta_t,
         )
         measures_list = [m_t[k] for k in range(K)]
 
         P_total = 1.0 / self._efl_target
         powers = curvatures * self._delta_n_cache
         power_sum = float(powers.sum().detach().cpu().item())
+
+        # F# always reported in metrics for logging/PNG titles regardless
+        # of enforce_fnum. Pupil radius was already computed for ray
+        # sampling above.
+        pupilr_metric = float(pupilr)
+        fnum_actual_metric = (
+            float(efl_actual.detach().cpu().item()) / (2.0 * pupilr_metric)
+            if pupilr_metric > 1e-6 else float("nan")
+        )
 
         metrics = {
             "rms_spot": float(rms_mean.detach().cpu().item()),
@@ -253,11 +282,20 @@ class PowerBudgetLensProblem(LensProblem):
             "efl_penalty": float(efl_penalty.detach().cpu().item()),
             "power_sum": power_sum,
             "power_sum_target": P_total,
+            "fnum_actual": fnum_actual_metric,
         }
+        if fnum_penalty_t is not None:
+            metrics["fnum_actual"] = float(fnum_actual_t.detach().cpu().item())
+            metrics["fnum_deviation"] = float(fnum_dev_t.detach().cpu().item())
+            metrics["fnum_penalty"] = float(fnum_penalty_t.detach().cpu().item())
         for k, name in enumerate(self.descriptor.coord_names):
             metrics[f"m{k}_{name}"] = float(
                 measures_list[k].detach().cpu().item()
             )
+        last_all = getattr(self.descriptor, "_last_all_seidel", None)
+        if last_all is not None:
+            for j, label in enumerate(("S1", "S2", "S3", "S4", "S5")):
+                metrics[f"seidel_{label}"] = float(last_all[j])
         return fitness, measures_list, metrics
 
     def _calc_hfov_deg(self, theta_t: torch.Tensor) -> float:

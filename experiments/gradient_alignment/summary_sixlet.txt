@@ -1,0 +1,94 @@
+Gradient alignment summary
+============================================================
+Source: experiments/gradient_alignment/cosine_similarities_sixlet.npz
+Generations logged: 2778
+theta_dim: 37   descriptor_dim: 2
+
+Sign convention:
+  cos(-∇_θ L, ∇_θ M_j) — positive = descriptor gradient
+  agrees with the loss-descent direction.
+
+Random-vector |cos| null in 37D ≈ 0.1312  (mean of |cos(g, h)| for unrelated g, h)
+
+Per-descriptor SIGNED cosine similarity:
+  S2:
+    mean   : +0.6244
+    median : +0.9427
+    std    : 0.6255
+    p10    : -0.7238
+    p90    : +0.9909
+    frac > 0    : 0.835
+    frac > 0.3  : 0.809
+    frac < -0.3 : 0.145
+  S3:
+    mean   : +0.5542
+    median : +0.7289
+    std    : 0.4729
+    p10    : -0.2469
+    p90    : +0.9097
+    frac > 0    : 0.870
+    frac > 0.3  : 0.830
+    frac < -0.3 : 0.094
+
+Per-descriptor |cosine| (sign-invariant — Seidel sign is conventional):
+  S2:
+    mean |cos|  : 0.8591   (null ≈ 0.1312)
+    median |cos|: 0.9502
+    frac |cos|>0.3 : 0.954
+  S3:
+    mean |cos|  : 0.6971   (null ≈ 0.1312)
+    median |cos|: 0.7412
+    frac |cos|>0.3 : 0.924
+
+Cross-descriptor cosine similarity (∇M_S2 vs ∇M_S3):
+  mean        : +0.7311
+  median      : +0.8702
+  mean |cos|  : 0.8534
+
+Gradient norms (raw, before unit-rescaling):
+  mean ||∇L||      : 3.6693e+03
+  mean ||∇M_S2|| : 3.1738e+02
+  mean ||∇L||/||∇M_S2|| : 2.0570e+01
+  mean ||∇M_S3|| : 1.9518e+03
+  mean ||∇L||/||∇M_S3|| : 1.8855e+01
+
+============================================================
+Comparison vs. random-projection descriptors
+============================================================
+Random projection descriptor gradients are constant in θ:
+  ∇_θ M_random_j = A[:, j]  (j-th column of fixed 37×2 Gaussian matrix, unit-normalised).
+
+Per-descriptor |cos(−∇L, A_j)| using the published §5.2 ablation
+matrix (RandomState seed 12345, matches ablation_random_bc.yaml):
+  Random_1:
+    mean |cos|     : 0.1684   (null ≈ 0.1312)
+    median |cos|   : 0.1290
+    frac |cos|>0.3 : 0.165
+    signed mean cos: -0.1270
+  Random_2:
+    mean |cos|     : 0.2434   (null ≈ 0.1312)
+    median |cos|   : 0.2792
+    frac |cos|>0.3 : 0.374
+    signed mean cos: +0.1889
+
+Side-by-side comparison:
+  Random_1  mean |cos| : 0.1684
+  Random_2  mean |cos| : 0.2434
+  Seidel S2  mean |cos| : 0.8591
+  Seidel S3  mean |cos| : 0.6971
+  37-D random null      : 0.1312
+
+Distribution across 100 random matrices × 2 columns = 200 random descriptor directions:
+  mean      : 0.1370
+  std       : 0.0737
+  median    : 0.1170
+  95% range : [0.0456, 0.3016]
+  min, max  : 0.0309, 0.4011
+  frac mean |cos| ≥ Seidel S2 (0.8591) : 0.0000  (0/200)
+  frac mean |cos| ≥ Seidel S3 (0.6971) : 0.0000  (0/200)
+
+Sanity checks (see analyze_gradients.py stdout):
+  - cos(∇L, ∇L) = 1.000000   ✓
+  - cos(∇L, perm(∇L)) baseline: predicted 0 ± 1/√37 ≈ 0.164
+  - all cosines finite and in [-1, 1]   ✓
+  - 0 of N=2778 generations have NaN gradients   ✓

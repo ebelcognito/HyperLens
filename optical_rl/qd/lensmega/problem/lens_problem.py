@@ -47,7 +47,16 @@ class LensProblemConfig:
     free_gap_indices: Tuple[int, ...] = ()
     variable_flange: bool = False
     flange_bounds: Optional[Tuple[float, float]] = None
+    variable_materials: bool = False
+    free_material_indices: Tuple[int, ...] = ()
+    cemented_interfaces: Tuple[int, ...] = ()
+    field_weights: Optional[Tuple[float, ...]] = None
     device: str = "cpu"
+    # F-number soft constraint. When ``enforce_fnum`` is False the penalty is
+    # never computed and the loss is unchanged from pre-change behaviour.
+    enforce_fnum: bool = False
+    f_number_target: float = 4.0
+    fnum_penalty_weight: float = 1.0
 
 
 class LensProblem:
@@ -82,6 +91,7 @@ class LensProblem:
             free_curvature_indices=self.cfg.free_curvature_indices,
             derived_curvature_index=self.cfg.derived_curvature_index,
             device=self.cfg.device,
+            cemented_interfaces=self.cfg.cemented_interfaces,
         )
         self.template = template
         self.solver = GeneralizedParaxialSolver(template)
@@ -257,6 +267,52 @@ class LensProblem:
             excess = invalid_fraction_mean - self.cfg.invalid_tol
             fitness = fitness - self.cfg.invalid_penalty_weight * excess
 
+        # --- F-number soft penalty (gated by enforce_fnum) -------------------
+        # Reaches here only when the strict_entrance_pupil rejection above
+        # did NOT short-circuit, so the pupil computation is meaningful.
+        fnum_metrics = None
+        if self.cfg.enforce_fnum:
+            # Recompute c_full inline (post-closure curvatures) so gradients
+            # flow correctly when derived_curvature_index lies in the front
+            # group. Cheap: one paraxial walk.
+            c_full_fnum = self.solver.expand_theta(theta_t)
+            if (self.cfg.focal_length_target_mm is not None
+                    and self.template.derived_index is not None):
+                c_derived, _, _ = self.solver.derive_curvature_for_efl(
+                    c_full_fnum, self.cfg.focal_length_target_mm
+                )
+                c_full_fnum = c_full_fnum.clone()
+                c_full_fnum[self.template.derived_index] = c_derived
+            aper_idx = self.template.stop_index
+            r_stop_mm = float(lens.surfaces[aper_idx].r)
+            pupilr_diff = self.solver.paraxial_pupil_radius(
+                c_full_fnum, aper_idx, r_stop_mm
+            )
+            if self.cfg.focal_length_target_mm is not None:
+                # Closure makes EFL exact; treat as a constant so the F# gradient
+                # flows purely through the pupil, not through a fictitious EFL term.
+                efl_for_fnum = float(self.cfg.focal_length_target_mm)
+            else:
+                efl_for_fnum = self.solver.efl(c_full_fnum)
+            fnum_actual = efl_for_fnum / (2.0 * pupilr_diff)
+            # Relative-error formulation, mirrors how the EFL penalty is built
+            # (`(efl_actual - efl_target) / efl_target`). Keeps the penalty
+            # dimensionless and on the same scale as EFL so a single weight
+            # works across F# specs from F/2 to F/16.
+            fnum_target = float(self.cfg.f_number_target)
+            fnum_dev = (fnum_actual - fnum_target) / fnum_target
+            fnum_penalty = self.cfg.fnum_penalty_weight * fnum_dev ** 2
+            fitness = fitness - fnum_penalty
+            fnum_metrics = {
+                "fnum_actual": float(
+                    fnum_actual.detach().cpu().item()
+                ) if torch.is_tensor(fnum_actual) else float(fnum_actual),
+                "fnum_deviation": float(
+                    fnum_dev.detach().cpu().item()
+                ) if torch.is_tensor(fnum_dev) else float(fnum_dev),
+                "fnum_penalty": float(fnum_penalty.detach().cpu().item()),
+            }
+
         # Descriptor.
         field_y_deg = float(field_pts[self.cfg.descriptor_field_index][1])
         m_t = self.descriptor.compute(
@@ -265,17 +321,41 @@ class LensProblem:
             object_depth_mm=self.cfg.object_depth_mm,
             wavelength_um=self.cfg.wavelength_um,
             device=device,
+            theta_tensor=theta_t,
         )
         measures_list = [m_t[k] for k in range(K)]
+
+        # Always report fnum_actual in metrics so logging/PNG titles can show
+        # F# regardless of whether the soft penalty is enabled. EFL is exact
+        # via the closure formula when focal_length_target_mm is set,
+        # otherwise read from the differentiable solver.
+        if self.cfg.focal_length_target_mm is not None:
+            efl_for_metric = float(self.cfg.focal_length_target_mm)
+        else:
+            efl_for_metric = float(self.solver.efl(c_full_check).detach())
+        pupilr_metric = float(pupilr)
+        fnum_actual_metric = (efl_for_metric / (2.0 * pupilr_metric)
+                              if pupilr_metric > 1e-6 else float("nan"))
 
         metrics = {
             "rms_spot": float(rms_mean.detach().cpu().item()),
             "invalid_fraction": float(
                 invalid_fraction_mean.detach().cpu().item()
             ),
+            "fnum_actual": fnum_actual_metric,
         }
+        if fnum_metrics is not None:
+            # When the soft penalty is on, also report deviation + penalty
+            # value (overwrites fnum_actual with the same number).
+            metrics.update(fnum_metrics)
         for k, name in enumerate(self.descriptor.coord_names):
             metrics[f"m{k}_{name}"] = float(measures_list[k].detach().cpu().item())
+        # Full 5-Seidel snapshot for lineage logging (populated by
+        # SeidelDescriptor on its last compute call).
+        last_all = getattr(self.descriptor, "_last_all_seidel", None)
+        if last_all is not None:
+            for j, label in enumerate(("S1", "S2", "S3", "S4", "S5")):
+                metrics[f"seidel_{label}"] = float(last_all[j])
         return fitness, measures_list, metrics
 
     def evaluate(self, theta: np.ndarray, with_grads: bool = True) -> EvalResult:

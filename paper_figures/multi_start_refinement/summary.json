@@ -1,0 +1,82 @@
+[
+  {
+    "elite": "elite_0011_5904k",
+    "stored_rms_um": 4.716946791050442,
+    "baseline_rerefine_rms_um": 21.933532574098887,
+    "multistart_best_rms_um": 23.62834708451432,
+    "multistart_improvement_um": -18.911400293463878,
+    "multistart_improvement_pct": -400.92460507175656,
+    "n_perturbations": 5,
+    "all_perturbation_rms": [
+      31.299096528769,
+      25.675545360138997,
+      286.5006518499188,
+      23.62834708451432,
+      25.01641025568953
+    ]
+  },
+  {
+    "elite": "elite_0008_5328k",
+    "stored_rms_um": 7.492667920626524,
+    "baseline_rerefine_rms_um": 299.31904692327277,
+    "multistart_best_rms_um": 20.92426191618133,
+    "multistart_improvement_um": -13.431593995554806,
+    "multistart_improvement_pct": -179.26316951241154,
+    "n_perturbations": 5,
+    "all_perturbation_rms": [
+      20.92426191618133,
+      144.23547941049222,
+      21.407871543196702,
+      110.28594866947263,
+      194.62110901477024
+    ]
+  },
+  {
+    "elite": "elite_0010_5472k",
+    "stored_rms_um": 10.059595947458048,
+    "baseline_rerefine_rms_um": 286.73273955660244,
+    "multistart_best_rms_um": 23.102584966489413,
+    "multistart_improvement_um": -13.042989019031365,
+    "multistart_improvement_pct": -129.65718590642987,
+    "n_perturbations": 5,
+    "all_perturbation_rms": [
+      169.02817971645322,
+      25.624338823517686,
+      238.51150340842756,
+      27.626758555250678,
+      23.102584966489413
+    ]
+  },
+  {
+    "elite": "BEST_0001_1998k",
+    "stored_rms_um": 11.570659093157644,
+    "baseline_rerefine_rms_um": 300.6005424764178,
+    "multistart_best_rms_um": 16.395796230452095,
+    "multistart_improvement_um": -4.825137137294451,
+    "multistart_improvement_pct": -41.701489072025424,
+    "n_perturbations": 5,
+    "all_perturbation_rms": [
+      16.395796230452095,
+      34.429245464452464,
+      16.73466928026338,
+      27.700473035007438,
+      33.549165626022635
+    ]
+  },
+  {
+    "elite": "elite_0006_5328k",
+    "stored_rms_um": 20.902576052446655,
+    "baseline_rerefine_rms_um": 288.4336702459172,
+    "multistart_best_rms_um": 4.494016176494885,
+    "multistart_improvement_um": 16.40855987595177,
+    "multistart_improvement_pct": 78.50018023989509,
+    "n_perturbations": 5,
+    "all_perturbation_rms": [
+      17.286801684392966,
+      18.750275802549112,
+      137.0406835887601,
+      21.310154579044806,
+      4.494016176494885
+    ]
+  }
+]

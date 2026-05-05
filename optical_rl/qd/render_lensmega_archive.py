@@ -237,15 +237,22 @@ def _apply_theta_full_dof(
     free_curvature_indices: Sequence[int],
     free_gap_indices: Sequence[int],
     variable_flange: bool,
+    variable_materials: bool = False,
+    free_material_indices: Sequence[int] = (),
     device: str = "cpu",
 ) -> None:
-    """Apply a full-DOF theta (curvatures + gaps + flange) to a GeoLens."""
+    """Apply a full-DOF theta (curvatures + gaps + flange + materials) to a GeoLens."""
     theta_t = torch.tensor(theta, dtype=torch.float64, device=device)
     nc = len(free_curvature_indices)
     ng = len(free_gap_indices)
     curvatures = theta_t[:nc]
     gaps = theta_t[nc:nc + ng] if ng > 0 else None
-    flange_val = theta_t[nc + ng] if variable_flange else None
+    offset = nc + ng
+    flange_val = theta_t[offset] if variable_flange else None
+    if variable_flange:
+        offset += 1
+    n_mat = len(free_material_indices) if variable_materials else 0
+    mat_params = theta_t[offset:offset + 2 * n_mat] if n_mat > 0 else None
 
     dtype = lens.d_sensor.dtype
 
@@ -310,6 +317,22 @@ def _apply_theta_full_dof(
         d_sensor = z_last + max(float(bfl_t.item()), 1.0)
         lens.d_sensor = torch.tensor(d_sensor, dtype=dtype, device=device)
 
+    # Apply materials to GeoLens.
+    if mat_params is not None:
+        from deeplens.optics.material.materials import Material
+        for mat_idx, elem_idx in enumerate(free_material_indices):
+            n_d = float(mat_params[2 * mat_idx].item())
+            V_d = float(mat_params[2 * mat_idx + 1].item())
+            for si in template.element_groups[elem_idx]:
+                s = lens.surfaces[si]
+                if hasattr(s, "mat2") and s.mat2.name != "air":
+                    s.mat2.n = n_d
+                    s.mat2.V = V_d
+                    A, B = Material.nV_to_AB(n_d, V_d)
+                    s.mat2.A = A
+                    s.mat2.B = B
+                    s.mat2.dispersion = "cauchy"
+
     try:
         lens.post_computation()
     except Exception:
@@ -329,6 +352,8 @@ def _apply_theta_generic(
     free_curvature_indices: Optional[Sequence[int]] = None,
     free_gap_indices: Optional[Sequence[int]] = None,
     variable_flange: bool = False,
+    variable_materials: bool = False,
+    free_material_indices: Optional[Sequence[int]] = None,
 ) -> None:
     """Apply a theta vector to a GeoLens using lensmega's generalized solver.
 
@@ -341,6 +366,8 @@ def _apply_theta_generic(
             free_curvature_indices=free_curvature_indices or template.free_indices,
             free_gap_indices=free_gap_indices or [],
             variable_flange=variable_flange,
+            variable_materials=variable_materials,
+            free_material_indices=free_material_indices or [],
             device=device,
         )
         return
@@ -425,6 +452,8 @@ def render_design_lensmega(
     parameterization: str = "curvature",
     free_gap_indices: Optional[Sequence[int]] = None,
     variable_flange: bool = False,
+    variable_materials: bool = False,
+    free_material_indices: Optional[Sequence[int]] = None,
 ) -> dict[str, float]:
     from deeplens.optics import GeoLens
 
@@ -439,6 +468,8 @@ def render_design_lensmega(
         free_curvature_indices=free_curvature_indices,
         free_gap_indices=free_gap_indices,
         variable_flange=variable_flange,
+        variable_materials=variable_materials,
+        free_material_indices=free_material_indices,
     )
 
     ax.set_facecolor(theme.background)
@@ -459,10 +490,15 @@ def render_design_lensmega(
         )
         ray.prop_to(-1.0)
         _ray_out, ray_o_record = lens.trace2sensor(ray=ray, record=True)
+        # draw_ray_2d uses hardcoded linewidth=0.8; re-style after drawing.
+        ray_color = theme.ray_colors[i % len(theme.ray_colors)]
+        n_lines_before = len(ax.lines)
         lens.draw_ray_2d(
             ray_o_record, ax=ax, fig=ax.figure,
-            color=theme.ray_colors[i % len(theme.ray_colors)],
+            color=ray_color,
         )
+        for line in ax.lines[n_lines_before:]:
+            line.set_linewidth(1.8)
 
     spot = design.rms_spot
     if spot is None:
@@ -526,6 +562,8 @@ def render_archive_grid_lensmega(
     parameterization: str = "curvature",
     free_gap_indices: Optional[Sequence[int]] = None,
     variable_flange: bool = False,
+    variable_materials: bool = False,
+    free_material_indices: Optional[Sequence[int]] = None,
 ) -> list[dict[str, float]]:
     import matplotlib.pyplot as plt
 
@@ -583,6 +621,8 @@ def render_archive_grid_lensmega(
             parameterization=parameterization,
             free_gap_indices=free_gap_indices,
             variable_flange=variable_flange,
+            variable_materials=variable_materials,
+            free_material_indices=free_material_indices,
         )
         panel_metrics.append(metrics)
 
@@ -689,6 +729,7 @@ def main(argv=None) -> None:
         free_curvature_indices=tuple(prob.free_curvature_indices),
         derived_curvature_index=prob.derived_curvature_index,
         device=args.device,
+        cemented_interfaces=tuple(getattr(prob, "cemented_interfaces", ()) or ()),
     )
     solver = GeneralizedParaxialSolver(template)
 
@@ -771,6 +812,8 @@ def main(argv=None) -> None:
         parameterization=parameterization,
         free_gap_indices=getattr(prob, "free_gap_indices", None),
         variable_flange=getattr(prob, "variable_flange", False),
+        variable_materials=getattr(prob, "variable_materials", False),
+        free_material_indices=getattr(prob, "free_material_indices", None),
     )
     print(f"[{TAG}] grid saved: {grid_path}", flush=True)
 

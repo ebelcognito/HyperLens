@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import threading
 import queue
 import time
@@ -25,6 +26,7 @@ from ..problem.base import EvalResult
 from ..problem.lens_problem import LensProblem
 from ..problem.tracing import project_box, theta_to_unit, unit_to_theta
 from .cpu_pool import CPUWorkerPool
+from .lineage import LineageLogger, theta_hash
 from .output_manager import OutputManager
 from .seeder import Seeder
 
@@ -76,6 +78,7 @@ class _EliteRenderWorker:
                 free_curvature_indices=tuple(p.free_curvature_indices),
                 derived_curvature_index=p.derived_curvature_index,
                 device="cpu",
+                cemented_interfaces=tuple(p.cemented_interfaces),
             )
             solver = GeneralizedParaxialSolver(template)
             return template, lens, solver
@@ -90,7 +93,24 @@ class _EliteRenderWorker:
                 free_curvature_indices=p.free_curvature_indices,
                 free_gap_indices=p.free_gap_indices,
                 variable_flange=p.variable_flange,
+                variable_materials=p.variable_materials,
+                free_material_indices=p.free_material_indices,
             )
+
+        def _compute_fnum(lens):
+            """Paraxial F# read from the built lens. Returns None if it fails
+            so the caller can fall back to '?' in the title."""
+            try:
+                import torch as _torch
+                with _torch.no_grad():
+                    _, pupilr = lens.calc_entrance_pupil(paraxial=True)
+                pr = float(pupilr)
+                if pr <= 1e-6:
+                    return None
+                efl = float(lens.foclen)
+                return efl / (2.0 * pr)
+            except Exception:
+                return None
 
         def _render_png(lens, filepath, title):
             import matplotlib
@@ -147,10 +167,13 @@ class _EliteRenderWorker:
         signs = info.get("sign_pattern", "?")
         try:
             raw_fit = info.get("fitness", "?")
+            fnum_raw = _compute_fnum(lens)
+            fnum_str = f"F/{fnum_raw:.2f}" if fnum_raw is not None else "F/?"
             _render_png(
                 lens,
                 self._dir / f"{tag}_raw.png",
-                f"{tag} RAW | fitness={raw_fit:.6f}  RMS={rms_um}μm  EFL={efl_s}mm  [{signs}]",
+                f"{tag} RAW | fitness={raw_fit:.6f}  RMS={rms_um}μm  "
+                f"EFL={efl_s}mm  {fnum_str}  [{signs}]",
             )
         except Exception as e:
             print(f"[elite-render] raw PNG failed {tag}: {e}", flush=True)
@@ -178,6 +201,14 @@ class _EliteRenderWorker:
                 refine_cfg.problem.invalid_penalty_weight = io.refine_invalid_penalty_weight
             if io.refine_intersect_penalty_weight is not None:
                 refine_cfg.problem.intersect_penalty_weight = io.refine_intersect_penalty_weight
+            if io.refine_field_weights is not None:
+                refine_cfg.problem.field_weights = tuple(io.refine_field_weights)
+            # Heavier F# penalty during the polishing stage. Only takes
+            # effect when problem.enforce_fnum is True; otherwise the
+            # penalty is skipped and this override is a no-op.
+            if (refine_cfg.problem.enforce_fnum
+                    and io.refine_fnum_penalty_weight is not None):
+                refine_cfg.problem.fnum_penalty_weight = io.refine_fnum_penalty_weight
             desc = _build_descriptor(refine_cfg)
             prob = _build_problem(refine_cfg, desc)
             prob._ensure_backend()
@@ -296,11 +327,21 @@ class _EliteRenderWorker:
                 },
             }
 
+            # F# from the refined design (paraxial, read from the rebuilt lens
+            # below — also stashed in info for the JSON / PNG label).
+            ref_fnum = refined_eval.metrics.get("fnum_actual")
+            if ref_fnum is None:
+                # F# penalty disabled in this run; compute on demand for logging.
+                _tmpl_fn, _lens_fn, _solv_fn = _load_lens_and_template()
+                _apply_theta(_lens_fn, best_theta, _tmpl_fn, _solv_fn)
+                ref_fnum = _compute_fnum(_lens_fn)
+            fnum_str_ref = f"F/{ref_fnum:.2f}" if ref_fnum is not None else "F/?"
+
             conv_str = "CONVERGED" if converged else "max_steps"
             print(
                 f"[elite-refine] {tag}: "
                 f"raw={raw_fitness:.6f} → refined={refined_fitness:.6f} "
-                f"RMS={ref_rms*1000:.1f}μm EFL={ref_efl:.1f}mm "
+                f"RMS={ref_rms*1000:.1f}μm EFL={ref_efl:.1f}mm {fnum_str_ref} "
                 f"({lbfgs_steps} steps, {conv_str}, "
                 f"gnorm={final_gnorm:.2e}, {improvement:.2f}x) "
                 f"stability: sensitivity={stability['sensitivity']:.6f} "
@@ -330,11 +371,14 @@ class _EliteRenderWorker:
             try:
                 sens = stability['sensitivity']
                 surv = stability['pct_survived']
+                fnum_str_png = (f"F/{ref_fnum:.2f}"
+                                if ref_fnum is not None else "F/?")
                 _render_png(
                     lens2,
                     self._dir / f"{tag}_refined.png",
                     f"{tag} REFINED | fitness={refined_fitness:.6f}  "
-                    f"RMS={ref_rms*1000:.1f}μm  EFL={ref_efl:.1f}mm  [{ref_signs}]  "
+                    f"RMS={ref_rms*1000:.1f}μm  EFL={ref_efl:.1f}mm  "
+                    f"{fnum_str_png}  [{ref_signs}]  "
                     f"stability={sens:.6f}  survived={surv:.0f}%",
                 )
             except Exception as e:
@@ -411,11 +455,14 @@ class EliteTracker:
         is_new_best = r.fitness > self._best_fitness
         if is_new_best:
             self._best_fitness = r.fitness
+            fnum_val = r.metrics.get("fnum_actual")
+            fnum_str = f"F/{fnum_val:.2f} " if fnum_val is not None else ""
             print(
                 f"[elite] NEW BEST fitness={r.fitness:.6f} "
                 f"RMS={rms*1000:.1f}μm "
                 f"signs=[{sign_str}] sim={cos_sim:+.3f} "
                 f"EFL={r.metrics.get('efl_actual',0):.1f}mm "
+                f"{fnum_str}"
                 f"@ {evals} evals",
                 flush=True,
             )
@@ -473,6 +520,64 @@ class EliteTracker:
         return self._best_fitness
 
 
+class GradientLogger:
+    """Append-only logger of raw parent gradients per CMA-MEGA generation.
+
+    Used by the §3.2 gradient-alignment experiment: captures ``∇_θ L`` (via
+    fitness, where L = -fitness) and each ``∇_θ M_j`` *before* the
+    ``_normalized_gradients`` call so cosine similarity can be computed
+    directly on the un-rescaled vectors.
+    """
+
+    def __init__(self, path: Path, theta_dim: int, descriptor_dim: int) -> None:
+        self.path = path
+        self.theta_dim = int(theta_dim)
+        self.K = int(descriptor_dim)
+        self._iters: List[int] = []
+        self._gens: List[int] = []
+        self._thetas: List[np.ndarray] = []
+        self._grad_fit: List[np.ndarray] = []
+        self._grad_m: List[np.ndarray] = []  # each (K, theta_dim)
+        self._fitness: List[float] = []
+        self._flush_every = 200  # generations between disk flushes
+
+    def log(
+        self,
+        *,
+        evals: int,
+        generation: int,
+        theta: np.ndarray,
+        grads: Dict[str, np.ndarray],
+        fitness: float,
+    ) -> None:
+        self._iters.append(int(evals))
+        self._gens.append(int(generation))
+        self._thetas.append(np.asarray(theta, dtype=np.float64).copy())
+        self._grad_fit.append(
+            np.asarray(grads["fitness"], dtype=np.float64).copy()
+        )
+        gm = np.empty((self.K, self.theta_dim), dtype=np.float64)
+        for k in range(self.K):
+            gm[k] = np.asarray(grads[f"m{k}"], dtype=np.float64)
+        self._grad_m.append(gm)
+        self._fitness.append(float(fitness))
+        if len(self._iters) % self._flush_every == 0:
+            self.flush()
+
+    def flush(self) -> None:
+        if not self._iters:
+            return
+        np.savez(
+            self.path,
+            evals=np.asarray(self._iters, dtype=np.int64),
+            generations=np.asarray(self._gens, dtype=np.int64),
+            thetas=np.asarray(self._thetas, dtype=np.float64),
+            grad_fitness=np.asarray(self._grad_fit, dtype=np.float64),
+            grad_m=np.asarray(self._grad_m, dtype=np.float64),
+            fitness=np.asarray(self._fitness, dtype=np.float64),
+        )
+
+
 class CMAMEGARunner:
     """Lens-agnostic CMA-MEGA loop.
 
@@ -492,6 +597,7 @@ class CMAMEGARunner:
         outputs: OutputManager,
         cfg: RunConfig,
         pool: Optional[CPUWorkerPool] = None,
+        lineage: Optional[LineageLogger] = None,
     ) -> None:
         self.problem = problem
         self.descriptor = descriptor
@@ -501,6 +607,7 @@ class CMAMEGARunner:
         self.outputs = outputs
         self.cfg = cfg
         self.pool = pool
+        self.lineage = lineage
         self.alg: AlgorithmCfg = cfg.algorithm
         self.completed = 0
         self.generation = 0
@@ -547,14 +654,26 @@ class CMAMEGARunner:
             )
         else:
             elite_tracker = None
+        grad_logger: Optional[GradientLogger] = None
+        if bool(getattr(self.cfg.io, "log_gradients", False)):
+            grad_logger = GradientLogger(
+                path=self.outputs.paths.root / "gradient_log.npz",
+                theta_dim=theta_dim,
+                descriptor_dim=K,
+            )
         eval_budget = int(self.alg.iterations)
         target_completed = self.completed + eval_budget
         new_cell_bonus = float(self.alg.new_cell_bonus)
+        scale_bonus = bool(self.alg.scale_bonus_by_fitness)
+        bonus_fit_thr = float(self.alg.bonus_fitness_threshold)
+        bonus_fit_scale = max(float(self.alg.bonus_fitness_scale), 1e-12)
         cfg_hash = self.outputs.config_hash(self.cfg)
         checkpoint_every = max(0, int(self.cfg.io.checkpoint_every))
 
         scores_all: List[float] = []
         _no_improve_run = 0
+        _no_fitness_improve_run = 0
+        _last_best_fitness = float(self.archive.stats()["best_fitness"])
         loop_t0 = time.perf_counter()
         window_t0 = time.perf_counter()
         window_evals = 0
@@ -592,6 +711,15 @@ class CMAMEGARunner:
                     break
                 assert parent_eval.grads is not None
 
+                if grad_logger is not None:
+                    grad_logger.log(
+                        evals=int(self.completed),
+                        generation=int(self.generation),
+                        theta=parent_theta,
+                        grads=parent_eval.grads,
+                        fitness=float(parent_eval.fitness),
+                    )
+
                 unit_parent = theta_to_unit(parent_theta, theta_bounds)
                 grads = self._normalized_gradients(parent_eval.grads)
 
@@ -602,10 +730,21 @@ class CMAMEGARunner:
                 coeffs = self.emitter.ask(batch_n)
 
                 candidate_thetas = np.empty((batch_n, theta_dim), dtype=np.float64)
+                ablate = bool(getattr(self.alg, "ablate_gradients", False))
                 for local_idx, coeff in enumerate(coeffs):
-                    direction = abs(coeff[0]) * grads["fitness"]
-                    for k in range(K):
-                        direction = direction + coeff[1 + k] * grads[f"m{k}"]
+                    if ablate:
+                        # Ablation: ignore the physics gradients. Sample a
+                        # direction in theta-space from a standard Gaussian,
+                        # normalise. This makes the emitter equivalent to
+                        # Gaussian-mutation MAP-Elites (no Seidel steering).
+                        rng = np.random.default_rng(
+                            self.alg.cma_seed + self.completed + local_idx
+                        )
+                        direction = rng.normal(0.0, 1.0, size=(theta_dim,))
+                    else:
+                        direction = abs(coeff[0]) * grads["fitness"]
+                        for k in range(K):
+                            direction = direction + coeff[1 + k] * grads[f"m{k}"]
                     dir_norm = np.linalg.norm(direction)
                     if not np.isfinite(dir_norm) or dir_norm < 1e-12:
                         rng = np.random.default_rng(
@@ -631,6 +770,8 @@ class CMAMEGARunner:
                         )
                         for i in range(batch_n)
                     ]
+
+                parent_hash_for_gen = theta_hash(parent_theta)
 
                 batch_scores: List[float] = []
                 batch_status: List[int] = []
@@ -660,12 +801,38 @@ class CMAMEGARunner:
                         status = int(self.archive.insert(r))
                     scores_all.append(float(r.fitness))
                     if status == INSERT_NEW:
-                        batch_scores.append(float(r.fitness) + new_cell_bonus)
+                        if scale_bonus:
+                            # Sigmoid-weighted bonus: garbage-fitness new cells
+                            # get a tiny fraction of the bonus; high-fitness new
+                            # cells get the full bonus. Stops CMA from learning
+                            # "any new cell wins" when most novelty is in bad
+                            # regions of BC space.
+                            z = (float(r.fitness) - bonus_fit_thr) / bonus_fit_scale
+                            # Numerically stable sigmoid (avoid overflow on z<<0).
+                            if z >= 0:
+                                quality = 1.0 / (1.0 + math.exp(-z))
+                            else:
+                                ez = math.exp(z)
+                                quality = ez / (1.0 + ez)
+                            batch_scores.append(
+                                float(r.fitness) + new_cell_bonus * quality
+                            )
+                        else:
+                            batch_scores.append(float(r.fitness) + new_cell_bonus)
                     elif status == INSERT_REPLACED:
                         batch_scores.append(float(r.fitness))
                     else:
                         batch_scores.append(-np.inf)
                     batch_status.append(status)
+                    if self.lineage is not None:
+                        self.lineage.log(
+                            source="offspring",
+                            gen=int(self.generation) + 1,
+                            parent_theta_hash=parent_hash_for_gen,
+                            result=r,
+                            insert_status=int(status),
+                            archive=self.archive,
+                        )
 
                 self.emitter.tell(
                     coeffs, np.asarray(batch_scores, dtype=np.float64)
@@ -688,19 +855,40 @@ class CMAMEGARunner:
                 else:
                     _no_improve_run = 0
 
+                # Fitness-improvement tracker. Independent of insertion-based
+                # no_improve: corner-saturated CMA can keep inserting novel BC
+                # cells while best_fitness stays frozen, which is exactly the
+                # sigma-runaway equilibrium we want to break.
+                current_best = float(self.archive.stats()["best_fitness"])
+                if current_best > _last_best_fitness + float(
+                    self.alg.fitness_improve_eps
+                ):
+                    _no_fitness_improve_run = 0
+                    _last_best_fitness = current_best
+                else:
+                    _no_fitness_improve_run += 1
+
                 restart_reason = None
                 if _no_improve_run >= int(self.alg.restart_patience):
                     restart_reason = "no_improvement"
                     _no_improve_run = 0
+                elif (
+                    int(self.alg.fitness_patience) > 0
+                    and _no_fitness_improve_run >= int(self.alg.fitness_patience)
+                ):
+                    restart_reason = "no_fitness_improvement"
+                    _no_fitness_improve_run = 0
                 else:
                     flag, hansen_reason = self.emitter.should_restart()
                     if flag:
                         restart_reason = hansen_reason or "hansen_term"
                         _no_improve_run = 0
+                        _no_fitness_improve_run = 0
                 if restart_reason is not None:
                     sigma_pre = float(self.emitter.sigma)
                     self.emitter.reset()
                     self.restart_count += 1
+                    _no_fitness_improve_run = 0
                     print(
                         f"[lensmega] restart gen={self.generation} "
                         f"reason={restart_reason} sigma_pre={sigma_pre:.4f} "
@@ -775,7 +963,7 @@ class CMAMEGARunner:
                         self.outputs.save_archive_plot_filtered(
                             self.archive,
                             coord_names=self.descriptor.coord_names,
-                            fitness_threshold=-0.05,
+                            fitness_threshold=elite_threshold if elite_threshold is not None else -0.05,
                             evals=self.completed,
                         )
                     except Exception:
@@ -797,8 +985,23 @@ class CMAMEGARunner:
                 )
             except Exception as e:  # pragma: no cover
                 print(f"[lensmega] final archive dump failed: {e}")
+            # Render a grid of the top geometrically diverse designs.
+            try:
+                self._render_diverse_grid()
+            except Exception as e:
+                print(f"[lensmega] diverse grid render failed: {e}")
             if elite_tracker is not None:
                 elite_tracker.shutdown()
+            if grad_logger is not None:
+                try:
+                    grad_logger.flush()
+                    print(
+                        f"[lensmega] gradient log saved: {grad_logger.path} "
+                        f"({len(grad_logger._iters)} entries)",
+                        flush=True,
+                    )
+                except Exception as e:
+                    print(f"[lensmega] gradient log flush failed: {e}")
 
         s = self.archive.stats()
         s["iterations"] = float(eval_budget)
@@ -808,3 +1011,130 @@ class CMAMEGARunner:
             float(np.mean(scores_all)) if scores_all else float("nan")
         )
         return s
+
+    def _render_diverse_grid(
+        self, top_n: int = 50, pick_k: int = 9, cols: int = 3
+    ) -> None:
+        """Render a grid of the top geometrically diverse archive designs.
+
+        1. Take the *top_n* designs by fitness.
+        2. Normalize theta (curvatures + gaps only) to [0, 1].
+        3. Greedy farthest-point sampling to pick *pick_k* diverse designs.
+        4. Render in a grid.
+        """
+        from optical_rl.qd.render_lensmega_archive import (
+            ArchiveDesign,
+            render_archive_grid_lensmega,
+        )
+        from optical_rl.qd.render_singlet_archive_designs import PlotTheme
+        from ..problem.lens_template import load_lens_template
+        from ..problem.paraxial import GeneralizedParaxialSolver
+
+        cells = self.archive.cells
+        if len(cells) < 2:
+            return
+
+        p = self.cfg.problem
+
+        # 1. Collect all archive designs, sort by fitness.
+        all_designs = sorted(
+            ((k, r) for k, r in cells.items()),
+            key=lambda kr: kr[1].fitness, reverse=True,
+        )
+        candidates = all_designs[: min(top_n, len(all_designs))]
+        if len(candidates) < 2:
+            return
+
+        # 2. Normalize geometric theta (curvatures + gaps, exclude flange + materials).
+        nc = len(p.free_curvature_indices)
+        ng = len(p.free_gap_indices)
+        geo_dim = nc + ng
+        bounds = np.array(p.theta_bounds[:geo_dim], dtype=np.float64)
+        lo, hi = bounds[:, 0], bounds[:, 1]
+        span = hi - lo
+        span[span < 1e-12] = 1.0
+
+        geo_vecs = np.array([r.theta[:geo_dim] for _, r in candidates])
+        geo_norm = (geo_vecs - lo) / span  # (N, geo_dim) in [0, 1]
+
+        # 3. Greedy farthest-point sampling.
+        k = min(pick_k, len(candidates))
+        selected_idx = [0]  # start with the best design
+        min_dists = np.full(len(candidates), np.inf)
+
+        for _ in range(k - 1):
+            last = geo_norm[selected_idx[-1]]
+            dists_to_last = np.linalg.norm(geo_norm - last, axis=1)
+            min_dists = np.minimum(min_dists, dists_to_last)
+            # Exclude already selected
+            min_dists_copy = min_dists.copy()
+            for si in selected_idx:
+                min_dists_copy[si] = -1.0
+            selected_idx.append(int(np.argmax(min_dists_copy)))
+
+        selected = [candidates[i] for i in selected_idx]
+        print(
+            f"[lensmega] rendering {len(selected)} diverse designs "
+            f"(from top {len(candidates)} by fitness)",
+            flush=True,
+        )
+        for i, (cell, r) in enumerate(selected):
+            print(
+                f"  #{i+1} fitness={r.fitness:.4f}  "
+                f"S2={r.measures[0]:.6f}  S3={r.measures[1]:.6f}",
+                flush=True,
+            )
+
+        # 4. Render grid.
+        template, lens = load_lens_template(
+            p.lens_path,
+            wavelength_um=p.wavelength_um,
+            stop_surface_index=p.stop_surface_index,
+            free_curvature_indices=tuple(p.free_curvature_indices),
+            device="cpu",
+            cemented_interfaces=tuple(p.cemented_interfaces),
+        )
+        solver = GeneralizedParaxialSolver(template)
+
+        archive_designs = [
+            ArchiveDesign(
+                cell=cell, theta=r.theta,
+                fitness=r.fitness, measures=tuple(r.measures),
+            )
+            for cell, r in selected
+        ]
+        titles = [
+            f"#{i+1}  f={r.fitness:.3f}"
+            for i, (_, r) in enumerate(selected)
+        ]
+
+        out_path = self.outputs.paths.root / "diverse_elites.png"
+        render_archive_grid_lensmega(
+            selected=archive_designs,
+            lens_json_path=Path(p.lens_path),
+            template=template,
+            solver=solver,
+            focal_length_target_mm=p.focal_length_target_mm,
+            theme=PlotTheme(
+                background="white",
+                lens_fill="#d0e0f0",
+                lens_outline="black",
+                ray_colors=["#2196F3", "#4CAF50", "#F44336"],
+            ),
+            out_path=out_path,
+            depth_mm=float(p.object_depth_mm),
+            wavelength_um=p.wavelength_um,
+            num_rays=3,
+            fov_fracs=[0.0, 0.5, 1.0],
+            cols=cols,
+            dpi=150,
+            device="cpu",
+            free_curvature_indices=p.free_curvature_indices,
+            panel_titles=titles,
+            parameterization=p.parameterization,
+            free_gap_indices=p.free_gap_indices,
+            variable_flange=p.variable_flange,
+            variable_materials=p.variable_materials,
+            free_material_indices=p.free_material_indices,
+        )
+        print(f"[lensmega] diverse elites grid saved: {out_path}", flush=True)

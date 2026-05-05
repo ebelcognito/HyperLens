@@ -34,18 +34,40 @@ class ProblemCfg(BaseModel):
     free_gap_indices: List[int] = Field(default_factory=list)
     variable_flange: bool = False
     flange_bounds: Optional[Tuple[float, float]] = None
+    variable_materials: bool = False
+    free_material_indices: List[int] = Field(default_factory=list)
+    # Surface indices that are glass-glass cement boundaries.  Splits the
+    # auto-detected element group at each listed surface so each side gets
+    # its own (n, V) pair in the search.  See lens_template.py for details.
+    cemented_interfaces: List[int] = Field(default_factory=list)
+    field_weights: Optional[List[float]] = None
+
+    # --- F-number soft-constraint settings -----------------------------------
+    # When ``enforce_fnum`` is False (default) the F-number penalty term is
+    # never computed and the rest of the loss is bit-identical to pre-change
+    # behaviour, so existing configs need no edits.
+    enforce_fnum: bool = False
+    f_number_target: float = 4.0
+    fnum_penalty_weight: float = 1.0
 
     @model_validator(mode="after")
     def _check_bounds_match_free(self):
         expected = len(self.free_curvature_indices) + len(self.free_gap_indices)
         if self.variable_flange:
             expected += 1
+        if self.variable_materials:
+            expected += 2 * len(self.free_material_indices)
         if len(self.theta_bounds) != expected:
             raise ValueError(
                 f"theta_bounds length ({len(self.theta_bounds)}) must equal "
                 f"free_curvature_indices ({len(self.free_curvature_indices)}) + "
                 f"free_gap_indices ({len(self.free_gap_indices)}) + "
-                f"variable_flange ({1 if self.variable_flange else 0}) = {expected}"
+                f"variable_flange ({1 if self.variable_flange else 0}) + "
+                f"variable_materials (2*{len(self.free_material_indices)}) = {expected}"
+            )
+        if self.variable_materials and self.parameterization != "full_dof":
+            raise ValueError(
+                "variable_materials requires parameterization='full_dof'"
             )
         return self
 
@@ -53,7 +75,7 @@ class ProblemCfg(BaseModel):
 class DescriptorCfg(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    kind: Literal["zernike", "seidel"]
+    kind: Literal["zernike", "seidel", "random"]
     params: Dict[str, Any]
 
 
@@ -68,8 +90,31 @@ class AlgorithmCfg(BaseModel):
     calibration_count: int = 512
     iterations: int = 1000
     new_cell_bonus: float = 1.0e6
+    # Optional fitness-quality scaling for the new-cell bonus. When enabled,
+    # the bonus paid for INSERT_NEW is multiplied by
+    #   sigmoid((fitness - bonus_fitness_threshold) / bonus_fitness_scale)
+    # so a new cell at high fitness gets the full bonus while a new cell at
+    # garbage fitness gets near-zero bonus. Stops CMA from chasing novelty
+    # into pathological corners of BC space. Default: disabled (preserves
+    # the original constant-bonus behavior).
+    scale_bonus_by_fitness: bool = False
+    bonus_fitness_threshold: float = 0.0
+    bonus_fitness_scale: float = 1.0
     log_every: int = 50
     restart_patience: int = 1
+    # Restart when best_fitness has not improved by `fitness_improve_eps` for
+    # this many consecutive generations. 0 disables (preserves original
+    # behavior, where only insertion-based no_improve and Hansen terms can
+    # trigger a restart). Use this to break sigma-runaway equilibria where
+    # corner-saturated offspring keep filling new BC cells but the fitness
+    # frontier is frozen.
+    fitness_patience: int = 0
+    fitness_improve_eps: float = 1.0e-6
+    # Ablation: if True, every CMA-MEGA offspring uses a purely random
+    # direction in theta-space instead of the descriptor-gradient-weighted
+    # one. Isolates the contribution of Seidel gradients — with this on
+    # the method degenerates to MAP-Elites with Gaussian mutation.
+    ablate_gradients: bool = False
 
 
 class ArchiveCfg(BaseModel):
@@ -95,12 +140,21 @@ class IOCfg(BaseModel):
     refine_efl_penalty_weight: Optional[float] = None
     refine_invalid_penalty_weight: Optional[float] = None
     refine_intersect_penalty_weight: Optional[float] = None
+    # Heavier F-number penalty for the L-BFGS polishing stage, mirroring
+    # how ``refine_efl_penalty_weight`` ramps up. Ignored when
+    # ``problem.enforce_fnum`` is False or when this field is None.
+    refine_fnum_penalty_weight: Optional[float] = 5.0
     refine_lbfgs_max_steps: int = 100
     refine_lbfgs_lr: float = 0.5
+    refine_field_weights: Optional[List[float]] = None
     refine_converge_tol: float = 1e-4
     # Basin stability analysis
     refine_stability_samples: int = 20
     refine_stability_perturbation: float = 0.01
+    # When True, write raw parent gradients (fitness + per-descriptor) to
+    # ``run_dir/gradient_log.npz`` once per CMA-MEGA generation. Used by the
+    # gradient-alignment experiment.
+    log_gradients: bool = False
 
 
 class RunConfig(BaseModel):
@@ -126,6 +180,8 @@ class RunConfig(BaseModel):
             if terms is None:
                 raise ValueError("descriptor.params.terms is required for seidel")
             k = len(terms)
+        elif self.descriptor.kind == "random":
+            k = int(self.descriptor.params.get("dim", 2))
         else:
             raise ValueError(f"unknown descriptor kind {self.descriptor.kind!r}")
 

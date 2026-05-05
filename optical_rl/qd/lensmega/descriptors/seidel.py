@@ -113,6 +113,9 @@ class SeidelDescriptor:
         object_depth_mm: float,
         wavelength_um: float,
         device: str,
+        n_bef_override=None,
+        n_aft_override=None,
+        **kwargs,
     ) -> torch.Tensor:
         """Compute selected Seidel aberration sums.
 
@@ -142,9 +145,13 @@ class SeidelDescriptor:
             d_next = lens.surfaces[i + 1].d.to(dtype=dtype)
             gaps.append(d_next - d_i)
 
-        # ---- refractive indices (constants from template) -------------
-        n_bef = [template.surfaces[i].n_before for i in range(N)]
-        n_aft = [template.surfaces[i].n_after for i in range(N)]
+        # ---- refractive indices (overridable for variable materials) ---
+        if n_bef_override is not None:
+            n_bef = n_bef_override
+            n_aft = n_aft_override
+        else:
+            n_bef = [template.surfaces[i].n_before for i in range(N)]
+            n_aft = [template.surfaces[i].n_after for i in range(N)]
 
         # ==============================================================
         # 1. Marginal ray trace  y₀ = 1, nu₀ = 0
@@ -225,8 +232,13 @@ class SeidelDescriptor:
         for k in range(N):
             nb = n_bef[k]
             na = n_aft[k]
-            if abs(na - nb) < 1e-12:
-                continue  # stop surface or equal-index interface
+            # Use template stop flag for skip — avoids tensor comparison issues
+            if template.surfaces[k].is_stop:
+                continue
+            delta_n = na - nb
+            _dn = float(delta_n.detach()) if torch.is_tensor(delta_n) else float(delta_n)
+            if abs(_dn) < 1e-12:
+                continue
 
             c_k = c[k]
             h_k = h_m[k]
@@ -270,6 +282,11 @@ class SeidelDescriptor:
         # 5. Return the user-selected subset
         # ==============================================================
         all_seidel = torch.stack([s.squeeze() for s in S])
+        # Side-channel: expose the full 5-Seidel vector for lineage logging.
+        # Non-differentiable snapshot — the autograd graph stays on `picks`.
+        self._last_all_seidel = tuple(
+            float(all_seidel[j].detach().cpu().item()) for j in range(5)
+        )
         picks = torch.stack([all_seidel[idx] for idx in self._indices])
         return picks
 

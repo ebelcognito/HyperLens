@@ -81,6 +81,7 @@ class ZernikeDescriptor:
         object_depth_mm: float,
         wavelength_um: float,
         device: str,
+        **kwargs,
     ) -> torch.Tensor:
         if not self._prepared:
             raise RuntimeError("ZernikeDescriptor.prepare() was not called")

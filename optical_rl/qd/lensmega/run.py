@@ -26,10 +26,12 @@ from .archive.grid import GridArchive
 from .config.loader import load_config
 from .config.schema import RunConfig
 from .core.cpu_pool import CPUWorkerPool, auto_worker_count
+from .core.lineage import LineageLogger
 from .core.output_manager import OutputManager
 from .core.runner import CMAMEGARunner
 from .core.seeder import Seeder
 from .descriptors.base import Descriptor
+from .descriptors.random_proj import RandomProjectionDescriptor
 from .descriptors.seidel import SeidelDescriptor
 from .descriptors.zernike import ZernikeDescriptor
 from .problem.lens_problem import LensProblem, LensProblemConfig
@@ -47,6 +49,13 @@ def _build_descriptor(cfg: RunConfig) -> Descriptor:
         )
     if kind == "seidel":
         return SeidelDescriptor(seidel_terms=params["terms"])
+    if kind == "random":
+        return RandomProjectionDescriptor(
+            dim_out=int(params.get("dim", 2)),
+            seed=int(params.get("seed", 12345)),
+            theta_dim=len(cfg.problem.theta_bounds),
+            theta_bounds=list(cfg.problem.theta_bounds),
+        )
     raise ValueError(f"unknown descriptor kind {kind!r}")
 
 
@@ -77,7 +86,14 @@ def _build_problem(cfg: RunConfig, descriptor: Descriptor) -> LensProblem:
         free_gap_indices=tuple(p.free_gap_indices),
         variable_flange=p.variable_flange,
         flange_bounds=tuple(p.flange_bounds) if p.flange_bounds else None,
+        variable_materials=p.variable_materials,
+        free_material_indices=tuple(p.free_material_indices),
+        cemented_interfaces=tuple(p.cemented_interfaces),
+        field_weights=tuple(p.field_weights) if p.field_weights else None,
         device=device,
+        enforce_fnum=p.enforce_fnum,
+        f_number_target=p.f_number_target,
+        fnum_penalty_weight=p.fnum_penalty_weight,
     )
     if p.parameterization == "full_dof":
         return FullDOFLensProblem(prob_cfg, descriptor)
@@ -169,9 +185,13 @@ def main() -> None:
         generation = int(ckpt.generation)
         restart_count = int(ckpt.restart_count)
         wallclock = float(ckpt.wallclock_seconds)
+        lineage = LineageLogger(outputs.paths.lineage)
+        seeder.lineage = lineage
     else:
         outputs = OutputManager.for_new_run(cfg.io)
         outputs.stamp(cfg, source_yaml=config_path)
+        lineage = LineageLogger(outputs.paths.lineage)
+        seeder.lineage = lineage
         if cfg.archive.bounds is None:
             print(
                 f"[lensmega] calibrating archive bounds "
@@ -195,6 +215,7 @@ def main() -> None:
         outputs=outputs,
         cfg=cfg,
         pool=pool,
+        lineage=lineage,
     )
     runner.completed = completed
     runner.generation = generation
@@ -210,6 +231,8 @@ def main() -> None:
     finally:
         if pool is not None:
             pool.shutdown()
+        if lineage is not None:
+            lineage.close()
     print(f"[lensmega] final stats: {stats}")
 
 

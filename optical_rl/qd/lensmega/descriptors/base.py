@@ -43,6 +43,7 @@ class Descriptor(Protocol):
         object_depth_mm: float,
         wavelength_um: float,
         device: str,
+        **kwargs,
     ) -> torch.Tensor:
         """Return a shape-(K,) differentiable torch tensor of BC coordinates."""
         ...
