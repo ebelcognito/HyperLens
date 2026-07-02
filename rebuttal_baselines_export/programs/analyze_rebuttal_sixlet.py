@@ -61,11 +61,11 @@ def epsilon_net(designs: List[Tuple[float, list]], eps: float,
 
 
 def load_pool(path: str):
-    """Return list of design dicts with keys refined_fitness, theta, rms_um."""
+    """Return list of design dicts (refined_fitness, theta, rms_um). Parquet or JSON."""
     if not path or not os.path.exists(path):
         return None
-    blob = json.loads(Path(path).read_text())
-    return blob.get("designs", [])
+    from io_results import read_pool
+    return read_pool(path)
 
 
 def main() -> None:

@@ -6,3 +6,5 @@ pyyaml
 tensorboard
 matplotlib
 requests
+cma
+pyarrow

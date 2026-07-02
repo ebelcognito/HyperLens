@@ -85,11 +85,11 @@ declare -a BG_PIDS
 for seed in "${SEEDS[@]}"; do
   node $SERIAL_CPUS 6G $HPY m4_multistart_lbfgs.py --config $SIXLET_CFG \
      --budget $BUDGET --n-starts 20000 --max-steps 100 --seed $seed \
-     --out "$POOL/multistart_seed${seed}.json" --method-name multistart_lbfgs \
+     --out "$POOL/multistart_seed${seed}.parquet" --method-name multistart_lbfgs \
      > "$LOG/m4_seed${seed}.log" 2>&1 &  BG_PIDS+=($!)
   node $SERIAL_CPUS 6G $HPY m5_cmaes_restarts.py --config $SIXLET_CFG \
      --budget $BUDGET --seed $seed \
-     --out "$POOL/cmaes_seed${seed}.json" --method-name cmaes_restarts \
+     --out "$POOL/cmaes_seed${seed}.parquet" --method-name cmaes_restarts \
      > "$LOG/m5_seed${seed}.log" 2>&1 &  BG_PIDS+=($!)
 done
 log "  launched ${#BG_PIDS[@]} serial steps"
@@ -131,20 +131,20 @@ for seed in "${SEEDS[@]}"; do
       node $REFINE_CPUS 40G $HPY tools/refine_all_parallel.py \
         --pool-from hl --hl-run "$dir" --problem-config $SIXLET_CFG \
         --threshold -1.0 --top-n 500 \
-        --workers $REFINE_WORKERS --out "$REF/${arm}_seed${seed}.json" \
+        --workers $REFINE_WORKERS --out "$REF/${arm}_seed${seed}.parquet" \
         > "$LOG/refine_${arm}_seed${seed}.log" 2>&1 && log "   ok" || log "   FAILED"
     else
       log "   SKIP (no archive.pkl in $dir)"
     fi
   done
   for arm in multistart cmaes; do
-    pf="$POOL/${arm}_seed${seed}.json"
+    pf="$POOL/${arm}_seed${seed}.parquet"
     log "  refine ${arm} seed=${seed} (json pool)"
     if [[ -f "$pf" ]]; then
       node $REFINE_CPUS 40G $HPY tools/refine_all_parallel.py \
         --pool-from json --json-pool "$pf" --problem-config $SIXLET_CFG \
         --threshold -1.0 --top-n 500 \
-        --workers $REFINE_WORKERS --out "$REF/${arm}_seed${seed}.json" \
+        --workers $REFINE_WORKERS --out "$REF/${arm}_seed${seed}.parquet" \
         > "$LOG/refine_${arm}_seed${seed}.log" 2>&1 && log "   ok" || log "   FAILED"
     else
       log "   SKIP (no pool file $pf)"
@@ -164,7 +164,7 @@ seeds = "${SEEDS[*]}".split()
 ref_seidel = {"42": "${REF_SEIDEL[42]}", "43": "${REF_SEIDEL[43]}"}
 ref_saga   = {"42": "${REF_SAGA[42]}",   "43": "${REF_SAGA[43]}"}
 REF = "$REF"
-def m(arm): return {s: f"{REF}/{arm}_seed{s}.json" for s in seeds}
+def m(arm): return {s: f"{REF}/{arm}_seed{s}.parquet" for s in seeds}
 man = {"sixlet_config": "$SIXLET_CFG", "methods": {
     "seidel_s2s3":      {s: ref_seidel.get(s, "") for s in seeds},
     "sa_ga":            {s: ref_saga.get(s, "")   for s in seeds},

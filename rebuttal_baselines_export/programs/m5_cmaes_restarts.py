@@ -41,6 +41,8 @@ torch.set_num_threads(1)
 
 import cma
 
+from io_results import write_pool
+
 
 def _build_problem(config_path: Path):
     from optical_rl.qd.lensmega.config.loader import load_config
@@ -143,19 +145,16 @@ def main() -> None:
     if len(designs) > args.budget:
         designs = designs[: args.budget]
 
-    out = {
+    meta = {
         "name": args.method_name,
         "n_evaluations": len(designs),
         "n_restarts": restart,
         "gradient_evals": 0,  # derivative-free
         "wall_seconds": float(wall),
         "config": str(args.config),
-        "designs": designs,
     }
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with args.out.open("w") as f:
-        json.dump(out, f, indent=2)
-    print(f"\n[m5] wrote {args.out}  n_evals={len(designs)}  restarts={restart}  "
+    written = write_pool(args.out, designs, meta)
+    print(f"\n[m5] wrote {written}  n_evals={len(designs)}  restarts={restart}  "
           f"wall={wall:.0f}s", flush=True)
     if designs:
         fits = np.array([d["fitness"] for d in designs])

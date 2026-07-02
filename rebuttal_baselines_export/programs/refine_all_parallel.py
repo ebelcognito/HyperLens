@@ -33,6 +33,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from io_results import read_pool, write_pool
+
 
 # ---------------- Worker ----------------
 _WORKER_STATE: Dict[str, Any] = {}
@@ -134,9 +136,8 @@ def load_sa_ga_pool(run_dir: Path, threshold: float) -> List[Tuple[List[float], 
 
 
 def load_json_pool(json_path: Path, threshold: float) -> List[Tuple[List[float], float]]:
-    """Load a flat {designs:[{theta, fitness}]} pool (m4/m5 driver output)."""
-    blob = json.loads(json_path.read_text())
-    designs = blob.get("designs", blob if isinstance(blob, list) else [])
+    """Load a flat pool (m4/m5 driver output) — Parquet or JSON, auto-detected."""
+    designs = read_pool(json_path)
     out = []
     for d in designs:
         fit = d.get("fitness", d.get("raw_fitness"))
@@ -218,17 +219,18 @@ def main():
           f"total_wall={time.time()-t0:.1f}s", flush=True)
 
     out_path = Path(args.out).resolve()
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps({
+    ok_designs = [r for r in results if "error" not in r]
+    errors = [r for r in results if "error" in r]
+    meta = {
         "pool_from": args.pool_from,
         "threshold": args.threshold,
         "n_pool": len(pool),
         "n_refined_ok": n_ok,
         "n_refined_err": n_err,
-        "designs": [r for r in results if "error" not in r],
-        "errors": [r for r in results if "error" in r],
-    }, indent=2))
-    print(f"[main] wrote {out_path}", flush=True)
+        "errors": errors,
+    }
+    written = write_pool(out_path, ok_designs, meta)
+    print(f"[main] wrote {written}", flush=True)
 
 
 if __name__ == "__main__":

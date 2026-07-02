@@ -33,6 +33,8 @@ import numpy as np
 import torch
 torch.set_num_threads(1)
 
+from io_results import write_pool
+
 
 def _build_problem(config_path: Path):
     from optical_rl.qd.lensmega.config.loader import load_config
@@ -177,18 +179,15 @@ def main() -> None:
                   flush=True)
 
     wall = time.perf_counter() - t0
-    out = {
+    meta = {
         "name": args.method_name,
         "n_evaluations": int(total_evals),
         "wall_seconds": float(wall),
         "config": str(args.config),
         "n_starts_used": len(designs),
-        "designs": designs,
     }
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with args.out.open("w") as f:
-        json.dump(out, f, indent=2)
-    print(f"\n[m4] wrote {args.out}")
+    written = write_pool(args.out, designs, meta)
+    print(f"\n[m4] wrote {written}")
     if designs:
         fits = np.array([d["fitness"] for d in designs])
         print(f"[m4] best fitness: {fits.max():+.4f}")

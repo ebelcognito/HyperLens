@@ -110,6 +110,7 @@ $HPY analyze_rebuttal_sixlet.py --manifest <ROOT>/manifest.json --eps 0.20 --ref
 - `lens_param_descriptor.py` — **P5** descriptor (copy of `optical_rl/qd/lensmega/descriptors/lens_param.py`). NEW.
 - `refine_all_parallel.py` — refinement pool runner with the NEW `--pool-from json` mode (copy of `tools/refine_all_parallel.py`).
 - `analyze_rebuttal_sixlet.py` — ε-net + refined-RMS comparison table from a manifest. NEW.
+- `io_results.py` — Parquet-first pool IO with a JSON shim + format auto-detect. NEW. All the baseline scripts write/read design pools through this; pools are stored as `.parquet` (~5× smaller than JSON on real data, typed + queryable with duckdb/polars), while old `.json` pools still load unchanged. Small human/AI-facing files (`manifest.json`, `table.json`) stay JSON. Needs `pyarrow` (in `requirements.txt`).
 - `stage_env.sh` — copy the conda env to node-local `/tmp` for fast imports. NEW.
 - `smoke_rebuttal.sh` — tiny end-to-end validation of every new code path. NEW.
 
