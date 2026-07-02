@@ -1,0 +1,57 @@
+# ============================================================================
+# SA+GA+Refine baseline hyperparameters — sixlet APS-C v2
+# ============================================================================
+# These match QGSO/TCI_Optifusion at the family level (see
+# QGSO/TCI_Optifusion/gaoptics/gygad.py for the reference implementation).
+# Two principled deviations are logged in hyperparameters.json:
+#   (1) ADAM uses autograd, not finite differences (QGSO does FD because
+#       it operates on a non-autograd-able trace; we have autograd, so
+#       restricting the baseline to FD would be artificial — and FD
+#       costs 2D forward evals/step which would dominate the budget).
+#   (2) Mutation num_genes=2 (matches QGSO/gygad.py:495), not the
+#       OptiFusion paper's claimed p=0.3 fraction.
+#
+# Population scaling: QGSO uses m=4000 with budgets in the millions of
+# generations of evaluations. Our budget is 400k evaluate() calls (matches
+# the sixlet HyperLens reference). m=100 gives ~20 outer generations,
+# which matches the typical range in QGSO experiments.
+
+seed: 42
+
+# --- Population size ---
+population_size: 100
+
+# --- Outer-loop generation cap (early-terminates on budget) ---
+generations_max: 200
+
+# --- SA inner loop (per outer generation) ---
+# Adaptive temperature T = clamp(0.1*|fit|, max=1) — not configurable here,
+# follows QGSO/gygad.py:134 verbatim.
+sa_iter_max: 50            # QGSO uses 300 but we have a much smaller budget
+sa_rand_range: 0.1         # perturbation magnitude in unit space (QGSO default)
+sa_plateau_window: 20      # iters of mean-fit history to check for plateau
+sa_plateau_min_delta: 0.0025  # mean-fit improvement below this -> plateau
+
+# --- GA selection ---
+ga_selection_ratio: 0.06   # mu/m = 6% (QGSO default)
+ga_elite_ratio: 0.02       # nu/m = 2% (QGSO default)
+ga_diversity_min_distance: 0.05  # normalized euclidean distance threshold
+
+# --- ADAM refinement on parents ---
+adam_iter_num: 30          # K_adam — QGSO uses 80, we use less to save budget
+adam_lr: 0.001             # lr_base (QGSO default)
+adam_beta1: 0.9
+adam_beta2: 0.9
+adam_cos_T: 10.0           # cosine LR period (QGSO default)
+adam_plateau_window: 10
+adam_plateau_eps: 0.001
+
+# --- Mutation ---
+mutation_num_genes: 2      # variables perturbed per offspring (QGSO default)
+
+# --- Refinement params are pulled from problem_config.io.* directly ---
+# (refine_lbfgs_max_steps, refine_lbfgs_lr, refine_field_weights,
+#  refine_efl_penalty_weight, refine_invalid_penalty_weight,
+#  refine_intersect_penalty_weight, refine_fnum_penalty_weight,
+#  refine_converge_tol, refine_stability_samples,
+#  refine_stability_perturbation, elite_fitness_threshold)

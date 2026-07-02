@@ -1,0 +1,242 @@
+{
+  "start": {
+    "foclen_mm": 56.68607090372749,
+    "d_sensor_mm": 61.36575515778955,
+    "sensor_size_mm": [
+      7.318555185280767,
+      7.318555185280767
+    ],
+    "surfaces": [
+      {
+        "index": 0,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.007414310056116248,
+        "d_axial_mm": 0.0,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 1,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": -0.04055328004957081,
+        "d_axial_mm": 2.9017928114398854,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 2,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": -0.0092828987730775,
+        "d_axial_mm": 10.67621918881898,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 3,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.07934483152690004,
+        "d_axial_mm": 12.148860613077428,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 4,
+        "type": "Aperture",
+        "is_stop": false,
+        "curvature_inv_mm": null,
+        "d_axial_mm": 15.768268157020279,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 3.0
+      },
+      {
+        "index": 5,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.056642384008348624,
+        "d_axial_mm": 18.044065424342733,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 6,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": -0.009420555496114022,
+        "d_axial_mm": 20.352074900310217,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      }
+    ]
+  },
+  "branch_A_refined": {
+    "foclen_mm": 49.93094599766308,
+    "d_sensor_mm": 61.35594570636749,
+    "sensor_size_mm": [
+      7.318555185280767,
+      7.318555185280767
+    ],
+    "surfaces": [
+      {
+        "index": 0,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.039927974343299866,
+        "d_axial_mm": 0.0,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 1,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.005601555574685335,
+        "d_axial_mm": 2.9018235206604004,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 2,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": -0.024058502167463303,
+        "d_axial_mm": 10.646961212158203,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 3,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.04154086485505104,
+        "d_axial_mm": 12.118820786476135,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 4,
+        "type": "Aperture",
+        "is_stop": false,
+        "curvature_inv_mm": null,
+        "d_axial_mm": 15.741949915885925,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 3.0
+      },
+      {
+        "index": 5,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.030490828678011894,
+        "d_axial_mm": 18.03023374080658,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 6,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": -0.032997291535139084,
+        "d_axial_mm": 20.34201443195343,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      }
+    ]
+  },
+  "branch_B_refined": {
+    "foclen_mm": 49.8474720826974,
+    "d_sensor_mm": 61.24149477481842,
+    "sensor_size_mm": [
+      7.318555185280767,
+      7.318555185280767
+    ],
+    "surfaces": [
+      {
+        "index": 0,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.04666629806160927,
+        "d_axial_mm": 0.0,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 1,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.021158620715141296,
+        "d_axial_mm": 2.9019367694854736,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 2,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.002050724346190691,
+        "d_axial_mm": 10.617509603500366,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 3,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.052991706877946854,
+        "d_axial_mm": 12.08845341205597,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 4,
+        "type": "Aperture",
+        "is_stop": false,
+        "curvature_inv_mm": null,
+        "d_axial_mm": 15.658491730690002,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 3.0
+      },
+      {
+        "index": 5,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": 0.05132046341896057,
+        "d_axial_mm": 17.918814539909363,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      },
+      {
+        "index": 6,
+        "type": "Spheric",
+        "is_stop": false,
+        "curvature_inv_mm": -0.010925255715847015,
+        "d_axial_mm": 20.22782289981842,
+        "n_after": null,
+        "v_after": null,
+        "clear_aperture_mm": 7.5
+      }
+    ]
+  }
+}

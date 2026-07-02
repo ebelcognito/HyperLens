@@ -75,7 +75,7 @@ class ProblemCfg(BaseModel):
 class DescriptorCfg(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    kind: Literal["zernike", "seidel", "random"]
+    kind: Literal["zernike", "seidel", "random", "lens_param"]
     params: Dict[str, Any]
 
 
@@ -182,6 +182,13 @@ class RunConfig(BaseModel):
             k = len(terms)
         elif self.descriptor.kind == "random":
             k = int(self.descriptor.params.get("dim", 2))
+        elif self.descriptor.kind == "lens_param":
+            indices = self.descriptor.params.get("indices")
+            if indices is None:
+                raise ValueError(
+                    "descriptor.params.indices is required for lens_param"
+                )
+            k = len(indices)
         else:
             raise ValueError(f"unknown descriptor kind {self.descriptor.kind!r}")
 

@@ -1,0 +1,408 @@
+{
+  "E5": {
+    "sixlet": [
+      {
+        "rms_cap": "all",
+        "eps": 0.2,
+        "n_pool": 500,
+        "n_eps_distinct": 86,
+        "min_pairwise_dist": 0.20065968607901885,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "all",
+        "eps": 0.3,
+        "n_pool": 500,
+        "n_eps_distinct": 61,
+        "min_pairwise_dist": 0.3000477657372852,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-30\u00b5m",
+        "eps": 0.2,
+        "n_pool": 86,
+        "n_eps_distinct": 25,
+        "min_pairwise_dist": 0.2784556599161887,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-30\u00b5m",
+        "eps": 0.3,
+        "n_pool": 86,
+        "n_eps_distinct": 19,
+        "min_pairwise_dist": 0.3007269251402216,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-20\u00b5m",
+        "eps": 0.2,
+        "n_pool": 41,
+        "n_eps_distinct": 11,
+        "min_pairwise_dist": 0.2784556599161887,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-20\u00b5m",
+        "eps": 0.3,
+        "n_pool": 41,
+        "n_eps_distinct": 10,
+        "min_pairwise_dist": 0.303205813357137,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-10\u00b5m",
+        "eps": 0.2,
+        "n_pool": 9,
+        "n_eps_distinct": 5,
+        "min_pairwise_dist": 0.2784556599161887,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-10\u00b5m",
+        "eps": 0.3,
+        "n_pool": 9,
+        "n_eps_distinct": 4,
+        "min_pairwise_dist": 0.303205813357137,
+        "separation_ok": true
+      }
+    ],
+    "octuplet": [
+      {
+        "rms_cap": "all",
+        "eps": 0.2,
+        "n_pool": 310,
+        "n_eps_distinct": 31,
+        "min_pairwise_dist": 0.26034037280244837,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "all",
+        "eps": 0.3,
+        "n_pool": 310,
+        "n_eps_distinct": 22,
+        "min_pairwise_dist": 0.30046769172784416,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-30\u00b5m",
+        "eps": 0.2,
+        "n_pool": 29,
+        "n_eps_distinct": 3,
+        "min_pairwise_dist": 0.2944202032870077,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-30\u00b5m",
+        "eps": 0.3,
+        "n_pool": 29,
+        "n_eps_distinct": 2,
+        "min_pairwise_dist": 0.35868826976842194,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-20\u00b5m",
+        "eps": 0.2,
+        "n_pool": 5,
+        "n_eps_distinct": 2,
+        "min_pairwise_dist": 0.35868826976842194,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-20\u00b5m",
+        "eps": 0.3,
+        "n_pool": 5,
+        "n_eps_distinct": 2,
+        "min_pairwise_dist": 0.35868826976842194,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-10\u00b5m",
+        "eps": 0.2,
+        "n_pool": 0,
+        "n_eps_distinct": 0,
+        "min_pairwise_dist": Infinity,
+        "separation_ok": true
+      },
+      {
+        "rms_cap": "sub-10\u00b5m",
+        "eps": 0.3,
+        "n_pool": 0,
+        "n_eps_distinct": 0,
+        "min_pairwise_dist": Infinity,
+        "separation_ok": true
+      }
+    ]
+  },
+  "E1": {
+    "sixlet": {
+      "n_designs": 500,
+      "dim": 37,
+      "minmax": {
+        "cum_pc1": 0.11590011224047897,
+        "cum_pc2": 0.2135471024802075,
+        "cum_pc3": 0.3005898139309772,
+        "n_for_90pct": 22,
+        "n_for_95pct": 26
+      },
+      "zscore": {
+        "cum_pc1": 0.10889661065638363,
+        "cum_pc2": 0.20634420743069182,
+        "cum_pc3": 0.296520963590778,
+        "n_for_90pct": 22,
+        "n_for_95pct": 27
+      }
+    },
+    "octuplet": {
+      "n_designs": 310,
+      "dim": 45,
+      "minmax": {
+        "cum_pc1": 0.22380577631968748,
+        "cum_pc2": 0.3705758413812157,
+        "cum_pc3": 0.4627450306646152,
+        "n_for_90pct": 14,
+        "n_for_95pct": 18
+      },
+      "zscore": {
+        "cum_pc1": 0.20859146125688782,
+        "cum_pc2": 0.36085559750671786,
+        "cum_pc3": 0.45289636312157344,
+        "n_for_90pct": 14,
+        "n_for_95pct": 19
+      }
+    }
+  },
+  "E2": {
+    "sixlet": {
+      "n_hl": 500,
+      "n_sg": 64,
+      "combined_pc12_var": 0.23351656054579056,
+      "hl_hull_area_full": 2.5693821673876496,
+      "sg_hull_area": 1.1287105728548688,
+      "hl_hull_area_subsampled_mean": 2.2268308851005805,
+      "hl_hull_area_subsampled_p5_p95": [
+        2.0082882378292806,
+        2.3631854685975155
+      ],
+      "hl_mpd_full": 0.8425232104761115,
+      "sg_mpd": 0.41060418833249934,
+      "hl_mpd_subsampled_mean": 0.8416249967421181,
+      "hl_mpd_per_point_full": 0.8425232104761115,
+      "sg_mpd_per_point": 0.41060418833249934
+    },
+    "octuplet": {
+      "n_hl": 310,
+      "n_sg": 68,
+      "combined_pc12_var": 0.34191090777462047,
+      "hl_hull_area_full": 2.656660297924537,
+      "sg_hull_area": 0.6013286455238928,
+      "hl_hull_area_subsampled_mean": 2.554488806353725,
+      "hl_hull_area_subsampled_p5_p95": [
+        2.4100393700945424,
+        2.635455093756705
+      ],
+      "hl_mpd_full": 1.059378064131215,
+      "sg_mpd": 0.30534397285604276,
+      "hl_mpd_subsampled_mean": 1.0441412657887388,
+      "hl_mpd_per_point_full": 1.059378064131215,
+      "sg_mpd_per_point": 0.30534397285604276
+    }
+  },
+  "E3": {
+    "sixlet": {
+      "n_designs": 500,
+      "n_pairs": 124750,
+      "pearson_r": 0.15054915224343532,
+      "pearson_p": 0.0,
+      "spearman_rho": 0.14027024847621603,
+      "spearman_p": 0.0,
+      "zero_param_distinct_behavior_count": 0
+    },
+    "octuplet": {
+      "n_designs": 310,
+      "n_pairs": 47895,
+      "pearson_r": 0.2037984161776472,
+      "pearson_p": 0.0,
+      "spearman_rho": 0.2773385061017909,
+      "spearman_p": 0.0,
+      "zero_param_distinct_behavior_count": 0
+    }
+  },
+  "E4": {
+    "sixlet": {
+      "eps_grid": [
+        0.0,
+        0.02,
+        0.04,
+        0.06,
+        0.08,
+        0.1,
+        0.12,
+        0.14,
+        0.16,
+        0.18,
+        0.2,
+        0.22,
+        0.24,
+        0.26,
+        0.28,
+        0.3,
+        0.32,
+        0.34,
+        0.36,
+        0.38,
+        0.4,
+        0.42,
+        0.44,
+        0.46,
+        0.48,
+        0.5
+      ],
+      "hl_counts": [
+        500,
+        295,
+        208,
+        164,
+        130,
+        116,
+        105,
+        96,
+        94,
+        90,
+        86,
+        86,
+        84,
+        80,
+        73,
+        61,
+        39,
+        25,
+        15,
+        9,
+        4,
+        3,
+        2,
+        2,
+        1,
+        1
+      ],
+      "sg_counts": [
+        64,
+        64,
+        64,
+        55,
+        45,
+        35,
+        28,
+        22,
+        18,
+        13,
+        13,
+        10,
+        8,
+        7,
+        7,
+        6,
+        6,
+        6,
+        6,
+        5,
+        3,
+        3,
+        3,
+        1,
+        1,
+        1
+      ],
+      "n_hl": 500,
+      "n_sg": 64
+    },
+    "octuplet": {
+      "eps_grid": [
+        0.0,
+        0.02,
+        0.04,
+        0.06,
+        0.08,
+        0.1,
+        0.12,
+        0.14,
+        0.16,
+        0.18,
+        0.2,
+        0.22,
+        0.24,
+        0.26,
+        0.28,
+        0.3,
+        0.32,
+        0.34,
+        0.36,
+        0.38,
+        0.4,
+        0.42,
+        0.44,
+        0.46,
+        0.48,
+        0.5
+      ],
+      "hl_counts": [
+        310,
+        149,
+        83,
+        50,
+        39,
+        33,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        26,
+        22,
+        15,
+        10,
+        5,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "sg_counts": [
+        68,
+        68,
+        68,
+        58,
+        45,
+        34,
+        26,
+        20,
+        16,
+        10,
+        7,
+        7,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "n_hl": 310,
+      "n_sg": 68
+    }
+  }
+}

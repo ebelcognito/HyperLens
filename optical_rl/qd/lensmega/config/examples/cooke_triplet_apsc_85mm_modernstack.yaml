@@ -1,0 +1,129 @@
+# ============================================================================
+# Cooke Triplet — APS-C 85mm F/4 — Materials + MODERN ANTI-RUNAWAY STACK
+# ============================================================================
+# Replaces cooke_triplet_materials_modernstack.yaml (which used the
+# small-aperture cooke_smaller_ap_1mm.json template, r_sensor=5.175mm) with a
+# *true APS-C* triplet (r_sensor=17mm) so the cross-system comparison vs
+# sixlet_apsc_discovery_v2 (50mm F/4 APS-C) and octuplet_apsc_2cement_v2
+# (50mm F/4 APS-C) is on a matched sensor format.
+#
+# Differences vs the small-aperture sister:
+#   lens_path                 cooke_smaller_ap_1mm  -> cooke_apsc_85mm_f4
+#   focal_length_target_mm    50.0                  -> 85.0
+#   curvature bounds          ±0.08                 -> ±0.05  (APS-C convention)
+#   thickness bounds          [0.8, 3.2]            -> [1.5, 8.0] crown,
+#                                                       [1.0, 6.0] flint
+#                             (scaled ~1.7× for 85mm vs 50mm focal length)
+#   air gap bounds            [0.5, 10.0]           -> [0.5, 18.0]
+#   flange                    [30, 65]              -> [40, 95]
+#   cma_eta                   0.15                  -> 0.10   (APS-C tolerates
+#                                                              gentler updates)
+#   run_name                  cooke_triplet_materials_modernstack
+#                            -> cooke_triplet_apsc_85mm_modernstack
+#
+# All other knobs (anti-sigma stack, archive grid, descriptor terms,
+# stage/num_rays, refinement weights) match the small-aperture sister so
+# the cross-system fairness audit reads identically.
+
+problem:
+  kind: lens
+  lens_path: DeepLens/datasets/lenses/cooke_apsc_85mm_f4.json
+  wavelength_um: 0.587
+  fitness_wavelengths_um: [0.486, 0.587, 0.656]
+  object_depth_mm: -20000.0
+  stop_surface_index: 4
+  parameterization: full_dof
+
+  free_curvature_indices: [0, 1, 2, 3, 5, 6]
+  derived_curvature_index: null
+  focal_length_target_mm: 85.0
+  efl_penalty_weight: 10.0
+
+  free_gap_indices: [0, 1, 2, 3, 4, 5]
+  variable_flange: true
+  variable_materials: true
+  free_material_indices: [0, 1, 2]   # all 3 glass elements
+
+  theta_bounds:
+    # --- 6 curvatures: ±0.05 (APS-C convention; matches sixlet_apsc_v2) ----
+    # Recipe: equilibrium |c| for cooke triplet F/4 EFL=85 ~ ±0.030. ~1.7×
+    # headroom over equilibrium, matching sixlet's "headroom over equilibrium"
+    # pattern.
+    - [-0.05, 0.05]      # c0  E1 front (crown)
+    - [-0.05, 0.05]      # c1  E1 back
+    - [-0.05, 0.05]      # c2  E2 front (flint)
+    - [-0.05, 0.05]      # c3  E2 back
+    - [-0.05, 0.05]      # c5  E3 front (crown)
+    - [-0.05, 0.05]      # c6  E3 back
+    # --- 6 gaps: scaled for 85mm focal length ----------------------------
+    - [1.5, 8.0]         # g0  E1 thickness (crown, template seed=5.56)
+    - [0.5, 18.0]        # g1  Air gap E1->E2 (template seed=10.26)
+    - [1.0, 6.0]         # g2  E2 thickness (flint, template seed=1.71)
+    - [0.5, 12.0]        # g3  Air gap E2->Stop (template seed=3.61)
+    - [0.5, 12.0]        # g4  Air gap Stop->E3 (template seed=4.69)
+    - [1.5, 8.0]         # g5  E3 thickness (crown, template seed=5.04)
+    # --- flange ----------------------------------------------------------
+    - [40.0, 95.0]       # flange (template seed=72.28)
+    # --- materials: (n, V) per element ----------------------------------
+    - [1.45, 1.85]       # n_0  E1 refractive index
+    - [25, 75]           # V_0  E1 Abbe number
+    - [1.45, 1.85]       # n_1  E2
+    - [25, 75]           # V_1
+    - [1.45, 1.85]       # n_2  E3
+    - [25, 75]           # V_2
+
+  stage: stage2
+  num_rays: 256
+  invalid_tol: 0.2
+  invalid_penalty_weight: 5.0
+  intersect_penalty_weight: 1.0
+  air_min_mm: 0.1
+  thick_min_mm: 0.5
+  strict_entrance_pupil: false
+  descriptor_field_index: 1
+
+descriptor:
+  kind: seidel
+  params:
+    terms: ["S2", "S3"]
+
+algorithm:
+  population_size: 18
+  initial_sigma: 0.5
+  cma_eta: 0.10                 # APS-C: gentler than 0.15 small-r_sensor
+  cma_seed: 42
+  seed_count: 1000
+  calibration_count: 1000
+  iterations: 10000
+
+  # --- anti-sigma-runaway stack (MODERN — active) -------------------------
+  new_cell_bonus: 1
+  scale_bonus_by_fitness: true
+  bonus_fitness_threshold: -1.0
+  bonus_fitness_scale: 50.0
+  log_every: 50
+  restart_patience: 3
+  fitness_patience: 100
+  fitness_improve_eps: 1.0e-6
+
+archive:
+  bins: [256, 256]
+  bounds: [[-0.001, 0.001], [-0.001, 0.001]]
+  bound_calibration_pad: 0.05
+
+io:
+  results_dir: results/lensmega
+  run_name: cooke_triplet_apsc_85mm_modernstack
+  checkpoint_every: 100
+  device: auto
+  elite_fitness_threshold: -0.2
+  refine_efl_penalty_weight: 20.0
+  refine_invalid_penalty_weight: 10.0
+  refine_intersect_penalty_weight: 2.0
+  refine_lbfgs_max_steps: 100
+  refine_lbfgs_lr: 0.5
+  refine_converge_tol: 0.0001
+  refine_field_weights: [1.0, 2.0, 4.0]
+  refine_stability_samples: 20
+  refine_stability_perturbation: 0.005
+  log_gradients: false

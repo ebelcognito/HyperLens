@@ -1,0 +1,226 @@
+{
+  "eval": 65916,
+  "discovered_at": "2026-04-14T05:07:08",
+  "elite_index": 35,
+  "is_new_best": false,
+  "fitness": -0.2769723372338258,
+  "rms_mm": 0.26007559204380143,
+  "rms_um": "260.1",
+  "efl_mm": "52.06",
+  "invalid_fraction": 0.0,
+  "sign_pattern": "+++++-",
+  "sign_match": 4,
+  "cosine_sim": 0.3929225195198261,
+  "theta": [
+    0.04023286124317278,
+    0.06614204691828962,
+    0.02273004823159799,
+    0.05618639611001478,
+    0.05148812225839401,
+    -0.004021746042880944,
+    0.05660654818373538,
+    0.04808835753617438,
+    2.1476442842321797,
+    2.872771981144,
+    2.1693060023298463,
+    4.832844945254433,
+    3.7875196394641524,
+    2.4225443890032725,
+    1.8068455644978991,
+    2.7120938860930703,
+    57.62241297329898
+  ],
+  "measures": [
+    0.00016811613259308972,
+    0.00011789590403045299
+  ],
+  "metrics": {
+    "rms_spot": 0.26007559204380143,
+    "invalid_fraction": 0.0,
+    "efl_actual": 52.05528259277344,
+    "efl_error_pct": 4.110565036535263,
+    "efl_penalty": 0.016896745190024376,
+    "d_sensor": 80.37398529052734,
+    "flange": 57.622413635253906,
+    "m0_S2_coma": 0.00016811613259308972,
+    "m1_S3_astigmatism": 0.00011789590403045299
+  },
+  "fingerprint_raw": {
+    "field_y_deg": 2.4261267969458316,
+    "elements": [
+      {
+        "name": "E1",
+        "surfaces": [
+          0,
+          1
+        ],
+        "glass": "n=1.620",
+        "S1_spherical": -0.00012958,
+        "S2_coma": -1.983e-05,
+        "S3_astigmatism": 2.7e-07,
+        "S4_petzval": -1.781e-05,
+        "S5_distortion": -1.13e-05
+      },
+      {
+        "name": "E2",
+        "surfaces": [
+          2,
+          3
+        ],
+        "glass": "n=1.620",
+        "S1_spherical": -0.00028531,
+        "S2_coma": -6.801e-05,
+        "S3_astigmatism": -8.04e-06,
+        "S4_petzval": -2.299e-05,
+        "S5_distortion": -1.061e-05
+      },
+      {
+        "name": "E3",
+        "surfaces": [
+          5,
+          6
+        ],
+        "glass": "n=1.620",
+        "S1_spherical": 0.00053999,
+        "S2_coma": 0.00021829,
+        "S3_astigmatism": 0.00010075,
+        "S4_petzval": 3.814e-05,
+        "S5_distortion": -7.598e-05
+      },
+      {
+        "name": "E4",
+        "surfaces": [
+          7,
+          8
+        ],
+        "glass": "n=1.620",
+        "S1_spherical": 5.55e-05,
+        "S2_coma": 3.765e-05,
+        "S3_astigmatism": 2.49e-05,
+        "S4_petzval": 5.85e-06,
+        "S5_distortion": -5e-06
+      }
+    ],
+    "system_total": {
+      "S1_spherical": 0.00018061,
+      "S2_coma": 0.0001681,
+      "S3_astigmatism": 0.00011787,
+      "S4_petzval": 3.2e-06,
+      "S5_distortion": -0.00010289
+    }
+  },
+  "refined": {
+    "theta": [
+      0.01660006493330002,
+      -0.016122888773679733,
+      -0.046005502343177795,
+      0.022021248936653137,
+      -0.03663260117173195,
+      -0.05785607919096947,
+      0.02660306915640831,
+      -0.003843126352876425,
+      2.1472582817077637,
+      2.8729207515716553,
+      2.16904354095459,
+      4.833252906799316,
+      3.787929058074951,
+      2.4224705696105957,
+      1.8064558506011963,
+      2.711060047149658,
+      57.62167739868164
+    ],
+    "fitness": -0.023646236732748644,
+    "rms_mm": 0.022809916460233514,
+    "rms_um": "22.8",
+    "efl_mm": "50.46",
+    "lbfgs_steps": 18,
+    "converged": true,
+    "final_grad_norm": 20.26617622,
+    "improvement_ratio": 11.7132,
+    "raw_fitness": -0.2769723372338258,
+    "stability": {
+      "perturbation_scale": 0.005,
+      "n_samples": 30,
+      "fitness_delta_mean": -0.3183912,
+      "fitness_delta_std": 0.26821299,
+      "fitness_delta_worst": -1.12685003,
+      "pct_survived": 6.7,
+      "sensitivity": 0.26821299
+    },
+    "metrics": {
+      "rms_spot": 0.022809916460233514,
+      "invalid_fraction": 0.03819444444444445,
+      "efl_actual": 50.457252502441406,
+      "efl_error_pct": 0.9145050309598446,
+      "efl_penalty": 0.0008363194647245109,
+      "d_sensor": 80.3720703125,
+      "flange": 57.62167739868164,
+      "m0_S2_coma": 5.158942051611353e-06,
+      "m1_S3_astigmatism": 1.5629752473231208e-07
+    }
+  },
+  "fingerprint_refined": {
+    "field_y_deg": 2.4261267969458316,
+    "elements": [
+      {
+        "name": "E1",
+        "surfaces": [
+          0,
+          1
+        ],
+        "glass": "n=1.620",
+        "S1_spherical": 2.193e-05,
+        "S2_coma": -3.113e-05,
+        "S3_astigmatism": 5.816e-05,
+        "S4_petzval": 2.249e-05,
+        "S5_distortion": -0.00013694
+      },
+      {
+        "name": "E2",
+        "surfaces": [
+          2,
+          3
+        ],
+        "glass": "n=1.620",
+        "S1_spherical": -0.00010758,
+        "S2_coma": 6.026e-05,
+        "S3_astigmatism": -0.00010459,
+        "S4_petzval": -4.674e-05,
+        "S5_distortion": 0.00014902
+      },
+      {
+        "name": "E3",
+        "surfaces": [
+          5,
+          6
+        ],
+        "glass": "n=1.620",
+        "S1_spherical": 7.37e-05,
+        "S2_coma": -2.838e-05,
+        "S3_astigmatism": 1.284e-05,
+        "S4_petzval": 1.458e-05,
+        "S5_distortion": 1.867e-05
+      },
+      {
+        "name": "E4",
+        "surfaces": [
+          7,
+          8
+        ],
+        "glass": "n=1.620",
+        "S1_spherical": 2.038e-05,
+        "S2_coma": 4.24e-06,
+        "S3_astigmatism": 3.375e-05,
+        "S4_petzval": 2.093e-05,
+        "S5_distortion": -7.108e-05
+      }
+    ],
+    "system_total": {
+      "S1_spherical": 8.42e-06,
+      "S2_coma": 5e-06,
+      "S3_astigmatism": 1.5e-07,
+      "S4_petzval": 1.126e-05,
+      "S5_distortion": -4.032e-05
+    }
+  }
+}

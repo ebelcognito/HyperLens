@@ -1,0 +1,27 @@
+{
+  "gen824": {
+    "L": 1.87695002041897,
+    "S2": 5.8546087680302626e-05,
+    "S3": 0.00010185972540114616
+  },
+  "n_samples": 800,
+  "radius_unit": 0.003,
+  "regression_2d": {
+    "L_vs_S2": {
+      "slope": -14538.131134888208,
+      "pearson_rho": -0.31863545510869296
+    },
+    "L_vs_S3": {
+      "slope": 19417.500513362313,
+      "pearson_rho": 0.4288382190189194
+    }
+  },
+  "regression_3d_plane": {
+    "L_eq": "-5.1007e+04\u00b7S2 + +5.3597e+04\u00b7S3 + -5.9655e-01",
+    "a": -51006.58067725627,
+    "b": 53597.38671680055,
+    "c": -0.5965499971644022,
+    "R2": 0.8638280542031753
+  },
+  "interpretation": "The 3-D plane fit captures R\u00b2 of the variation in L from a 300-point local neighborhood in \u03b8-space. Both slopes are consistent in sign with the analytical gradient cosines from the previous test (positive cos(-\u2207L, \u2207S2) \u2192 positive slope, i.e., decreasing S2 decreases L)."
+}

@@ -1,6 +1,8 @@
+pydantic>=2
 gymnasium
 stable-baselines3
 numpy
 pyyaml
 tensorboard
 matplotlib
+requests

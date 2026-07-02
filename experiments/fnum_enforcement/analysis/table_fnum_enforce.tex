@@ -1,0 +1,36 @@
+% Requires: \usepackage{booktabs,multirow}  (siunitx optional, not used here)
+% Source: experiments/fnum_enforcement/analysis/summary.md  (seed 42, 100k iters)
+\begin{table*}[t]
+\centering
+\caption{Effect of enforcing the f-number during quality-diversity
+discovery. Matched ablation: the only change from the unconstrained pool
+(\texttt{enforce\_fnum:false}, where the f-number penalty is gated off and
+absent from the objective) is \texttt{enforce\_fnum:true} at penalty weight
+$w_{f/\#}$; the lens template, full-DOF parameterization, $(S_2,S_3)$ archive
+(bins and bounds), 100k-evaluation CMA-MEGA budget, and seed are identical.
+All metrics are over the top-100 designs by fitness after L-BFGS refinement.
+On-spec band $f/\#\!\in\![3.6,4.4]$; sharp $\equiv$ RMS $<20\,\mu$m.
+$n_{\mathrm{sharp}}$ is the number of top-100 designs under 20\,$\mu$m and
+$\epsilon$-dist.\ counts those that are mutually distinct at $\epsilon\!=\!0.30$
+in normalized $\theta$ (i.e.\ diverse \emph{and} sharp). Enforcement pins the
+aperture but roughly doubles the best achievable RMS and collapses the number
+of diverse, sub-20\,$\mu$m designs.}
+\label{tab:fnum_enforce}
+\begin{tabular}{llcccccc}
+\toprule
+ & & \multicolumn{2}{c}{f/\# control} & \multicolumn{2}{c}{RMS ($\mu$m)} & \multicolumn{2}{c}{Sharp ($<20\,\mu$m)} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+System & Constraint & med.\ $f/\#$ & in band & median & best & $n_{\mathrm{sharp}}$ & $\epsilon$-dist.\ \\
+\midrule
+\multirow{3}{*}{Sixlet}
+ & none ($w{=}0$)       & 5.18 & 7\%           & 19.0 & \textbf{2.1}  & \textbf{54} & \textbf{10} \\
+ & enforced ($w{=}1$)   & 4.09 & 75\%          & 61.6 & 10.2          & 1  & 1 \\
+ & enforced ($w{=}10$)  & 3.98 & \textbf{86\%} & 47.8 & 16.0          & 1  & 1 \\
+\midrule
+\multirow{3}{*}{Octuplet}
+ & none ($w{=}0$)       & 4.09 & 48\%          & 33.9 & \textbf{12.2} & \textbf{5} & \textbf{2} \\
+ & enforced ($w{=}1$)   & 4.17 & 70\%          & 79.0 & 21.3          & 0  & 0 \\
+ & enforced ($w{=}10$)  & 4.04 & \textbf{82\%} & 97.0 & 20.2          & 0  & 0 \\
+\bottomrule
+\end{tabular}
+\end{table*}

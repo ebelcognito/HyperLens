@@ -1,0 +1,72 @@
+{
+  "data_source_note": "HL data found at results/lensmega/cooke_triplet_materials_modernstack_seed42_20260506_033503/ (the path in the brief, results/diversity_run_20260506_033447/triplet/seed42/hl/, does not exist; the diversity_run dir holds only logs and configs for the HL run, while the actual run_dir is under results/lensmega/). raw_fitness here is the archive cell's current fitness, NOT first-occupation; the GridArchive in this codebase does not store history. Across all 500 refined designs, raw_fitness uniquely matched a single archive cell, so cell_id was recovered by raw_fitness lookup.",
+  "hl_refined_population_size": 500,
+  "hl_refined_filtered_lt_1mm": 500,
+  "hl_median_raw_rms_um": 234.35131709775456,
+  "hl_median_refined_rms_um": 15.514174816483568,
+  "hl_longest_icicle": {
+    "raw_rms_um": 294.9902015492033,
+    "refined_rms_um": 1.4256751642336538,
+    "ratio": 206.91263265974754,
+    "theta": [
+      0.06587991118431091,
+      0.026889121159911156,
+      -0.016748182475566864,
+      0.07990571111440659,
+      0.02528270147740841,
+      -0.035837531089782715,
+      2.520650625228882,
+      2.81497859954834,
+      2.985605478286743,
+      6.324531078338623,
+      4.962384223937988,
+      2.3441829681396484,
+      51.285274505615234,
+      1.5553081035614014,
+      70.66612243652344,
+      1.4661003351211548,
+      30.017135620117188,
+      1.5718837976455688,
+      49.22467803955078
+    ]
+  },
+  "hl_top5_longest_icicles": [
+    {
+      "raw_rms_um": 294.9902015492033,
+      "refined_rms_um": 1.4256751642336538,
+      "ratio": 206.91263265974754
+    },
+    {
+      "raw_rms_um": 270.54332476390886,
+      "refined_rms_um": 1.9679463849279444,
+      "ratio": 137.47494689689663
+    },
+    {
+      "raw_rms_um": 384.567192862089,
+      "refined_rms_um": 3.0881188332034077,
+      "ratio": 124.53121580919368
+    },
+    {
+      "raw_rms_um": 222.60277299462854,
+      "refined_rms_um": 1.937939523311229,
+      "ratio": 114.8656964352953
+    },
+    {
+      "raw_rms_um": 161.17656724203266,
+      "refined_rms_um": 1.6232132585061299,
+      "ratio": 99.29475772663793
+    }
+  ],
+  "saga_refined_population_size": 24,
+  "saga_refined_filtered_lt_1mm": 24,
+  "eps_distinct_at_0.20": {
+    "hl": 39,
+    "saga": 24
+  },
+  "eps_distinct_at_0.30": {
+    "hl": 19,
+    "saga": 8
+  },
+  "hl_dominates_saga_at_every_eps": true,
+  "hl_strictly_dominates_saga_at_every_eps": false
+}

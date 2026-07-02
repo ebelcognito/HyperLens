@@ -1,0 +1,62 @@
+% Supplementary hyperparameter table.
+% Values verified one-by-one against the champion run YAMLs:
+%   experiments/gradient_alignment/sixlet_apsc_champion_config.yaml
+%   experiments/gradient_alignment/octuplet_apsc_champion_config.yaml
+% and the code that consumes them (optical_rl/qd/lensmega/).
+% Values spanning both columns are shared; split values genuinely differ
+% between the two runs.
+\begin{table}[h]
+\centering
+\caption{Hyperparameters for the champion six-element and eight-element
+(two cemented pairs) runs. Entries spanning both columns are identical across
+the two runs; split entries differ. All weights and tolerances are exactly as
+parsed from the run YAML.}
+\label{tab:supp-hyperparams}
+\begin{tabular}{lcc}
+\toprule
+Parameter & Sixlet & Octuplet \\
+\midrule
+\multicolumn{3}{l}{\emph{Problem definition}} \\
+Target effective focal length        & \multicolumn{2}{c}{$50$ mm} \\
+Target f-number (soft)               & \multicolumn{2}{c}{$f/4$} \\
+Field points $|\mathcal{F}|$         & \multicolumn{2}{c}{$3$ (on-axis, $0.5H$, $1.0H$)} \\
+Wavelengths $|\Lambda|$              & \multicolumn{2}{c}{$3$ (F\,$0.486$, d\,$0.587$, C\,$0.656$\,$\mu$m)} \\
+Rays per fitness evaluation $N_{\mathrm{ray}}$ & \multicolumn{2}{c}{$256$} \\
+\midrule
+\multicolumn{3}{l}{\emph{Behaviour space \& archive}} \\
+Behaviour descriptor                 & \multicolumn{2}{c}{Seidel $(S_2, S_3)$} \\
+Archive grid resolution              & \multicolumn{2}{c}{$2048 \times 2048$} \\
+Archive bounds $S_2$                 & $[-0.008, 0.008]$ & $[-0.005, 0.005]$ \\
+Archive bounds $S_3$                 & $[-0.012, 0.012]$ & $[-0.008, 0.008]$ \\
+\midrule
+\multicolumn{3}{l}{\emph{Seeding}} \\
+Seed batch size $N_{\mathrm{seed}}$  & \multicolumn{2}{c}{$5{,}000$} \\
+Bound-calibration batch              & \multicolumn{2}{c}{$2{,}000$} \\
+\midrule
+\multicolumn{3}{l}{\emph{Penalties \& feasibility (discovery)}} \\
+EFL penalty $\alpha_{\mathrm{efl}}$          & \multicolumn{2}{c}{$10$} \\
+f-number penalty $\alpha_{\mathrm{fnum}}$    & \multicolumn{2}{c}{$1$} \\
+Invalid-ray penalty $\alpha_{\mathrm{inv}}$  & \multicolumn{2}{c}{$5$} \\
+Intersection penalty $\alpha_{\mathrm{int}}$ & \multicolumn{2}{c}{$8$} \\
+Invalid-ray tolerance $\rho_{\mathrm{tol}}$  & \multicolumn{2}{c}{$0.2$} \\
+Min.\ air gap                        & \multicolumn{2}{c}{$0.1$ mm} \\
+Min.\ glass thickness                & \multicolumn{2}{c}{$0.5$ mm} \\
+\midrule
+\multicolumn{3}{l}{\emph{CMA-MEGA optimizer}} \\
+Population size $p$                   & $24$ & $32$ \\
+Initial step size $\sigma_0$         & \multicolumn{2}{c}{$1.0$} \\
+Gradient step $\eta$                 & \multicolumn{2}{c}{$0.1$} \\
+Archive-restart patience             & \multicolumn{2}{c}{$3$ iters} \\
+Fitness-restart patience             & $30$ iters & $20$ iters \\
+Total iterations                     & \multicolumn{2}{c}{$50{,}000$} \\
+\midrule
+\multicolumn{3}{l}{\emph{Local refinement (L-BFGS)}} \\
+Elite fitness threshold $f_{\mathrm{ref}}$ & \multicolumn{2}{c}{$-0.1$} \\
+Max L-BFGS steps                     & \multicolumn{2}{c}{$100$} \\
+L-BFGS learning rate                 & \multicolumn{2}{c}{$0.5$} \\
+Refine penalty overrides
+  ($\alpha_{\mathrm{efl}},\alpha_{\mathrm{inv}},\alpha_{\mathrm{int}},\alpha_{\mathrm{fnum}}$)
+                                     & \multicolumn{2}{c}{$20,\,10,\,2,\,2$} \\
+\bottomrule
+\end{tabular}
+\end{table}

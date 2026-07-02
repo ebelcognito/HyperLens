@@ -1,0 +1,137 @@
+problem:
+  kind: lens
+  lens_path: DeepLens/datasets/lenses/cooke_apsc_85mm_f4.json
+  wavelength_um: 0.587
+  fitness_wavelengths_um:
+  - 0.486
+  - 0.587
+  - 0.656
+  object_depth_mm: -20000.0
+  stop_surface_index: 4
+  parameterization: full_dof
+  free_curvature_indices:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 5
+  - 6
+  derived_curvature_index: null
+  focal_length_target_mm: 85.0
+  efl_penalty_weight: 10.0
+  enforce_fnum: true
+  f_number_target: 4.0
+  fnum_penalty_weight: 1.0
+  free_gap_indices:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  variable_flange: true
+  variable_materials: true
+  free_material_indices:
+  - 0
+  - 1
+  - 2
+  theta_bounds:
+  - - -0.05
+    - 0.05
+  - - -0.05
+    - 0.05
+  - - -0.05
+    - 0.05
+  - - -0.05
+    - 0.05
+  - - -0.05
+    - 0.05
+  - - -0.05
+    - 0.05
+  - - 1.4
+    - 6.0
+  - - 0.8
+    - 17.0
+  - - 1.4
+    - 4.5
+  - - 0.8
+    - 17.0
+  - - 0.8
+    - 17.0
+  - - 1.4
+    - 6.0
+  - - 50.0
+    - 110.0
+  - - 1.45
+    - 1.85
+  - - 25
+    - 75
+  - - 1.45
+    - 1.85
+  - - 25
+    - 75
+  - - 1.45
+    - 1.85
+  - - 25
+    - 75
+  stage: stage2
+  num_rays: 256
+  invalid_tol: 0.2
+  invalid_penalty_weight: 5.0
+  intersect_penalty_weight: 1.0
+  air_min_mm: 0.1
+  thick_min_mm: 0.5
+  strict_entrance_pupil: false
+  descriptor_field_index: 1
+descriptor:
+  kind: seidel
+  params:
+    terms:
+    - S2
+    - S3
+algorithm:
+  population_size: 20
+  initial_sigma: 0.5
+  cma_eta: 0.2
+  cma_seed: 42
+  seed_count: 1500
+  calibration_count: 1500
+  iterations: 100000
+  new_cell_bonus: 1
+  scale_bonus_by_fitness: true
+  bonus_fitness_threshold: -1.0
+  bonus_fitness_scale: 2.0
+  log_every: 50
+  restart_patience: 3
+  fitness_patience: 30
+  fitness_improve_eps: 1.0e-06
+archive:
+  bins:
+  - 256
+  - 256
+  bounds:
+  - - -0.0008
+    - 0.0008
+  - - -0.0008
+    - 0.0008
+  bound_calibration_pad: 0.05
+io:
+  results_dir: results/lensmega
+  run_name: apsc_triplet_REFSWEEP_F_patience30_seed42
+  checkpoint_every: 100
+  device: auto
+  elite_fitness_threshold: -0.15
+  refine_efl_penalty_weight: 0.0
+  refine_invalid_penalty_weight: 0.0
+  refine_intersect_penalty_weight: 2.0
+  refine_fnum_penalty_weight: 0.0
+  refine_lbfgs_max_steps: 200
+  refine_lbfgs_lr: 0.05
+  refine_converge_tol: 8.0e-05
+  refine_field_weights:
+  - 1.0
+  - 2.0
+  - 16.0
+  refine_stability_samples: 5
+  refine_stability_perturbation: 0.005
+  log_gradients: true

@@ -1,0 +1,17 @@
+method,rms_threshold_um,pool_size,eps_distinct_at_0.20,eps_distinct_at_0.30
+HL,30,414,32,13
+HL,100,488,38,18
+HL,300,500,39,19
+HL,1000,500,39,19
+SAGA-steelman,30,23,23,8
+SAGA-steelman,100,24,24,8
+SAGA-steelman,300,24,24,8
+SAGA-steelman,1000,24,24,8
+NoGrad,30,336,68,21
+NoGrad,100,478,89,30
+NoGrad,300,500,91,30
+NoGrad,1000,500,91,30
+RandomBC,30,363,96,29
+RandomBC,100,493,117,34
+RandomBC,300,498,119,34
+RandomBC,1000,500,119,34

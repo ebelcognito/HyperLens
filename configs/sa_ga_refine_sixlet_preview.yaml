@@ -1,0 +1,22 @@
+# Preview config — run on 2 spare CPUs while main run cooks. Uses the
+# same SA/GA/ADAM dynamics, smaller budget, different seed, so the
+# designs are independent samples from the same algorithm.
+seed: 43
+population_size: 30
+generations_max: 8
+sa_iter_max: 25
+sa_rand_range: 0.1
+sa_plateau_window: 10
+sa_plateau_min_delta: 0.0025
+ga_selection_ratio: 0.06
+ga_elite_ratio: 0.07          # nu=2 with m=30
+ga_diversity_min_distance: 0.05
+adam_iter_num: 20
+adam_lr: 0.001
+adam_beta1: 0.9
+adam_beta2: 0.9
+adam_cos_T: 10.0
+adam_plateau_window: 8
+adam_plateau_eps: 0.001
+mutation_num_genes: 2
+max_tracked_elites: 50

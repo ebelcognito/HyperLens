@@ -1,0 +1,38 @@
+{
+  "sixlet": {
+    "theta_dim": 37,
+    "pool_total": 8319,
+    "pool_sub20um": 1318,
+    "pool_sub10um": 377,
+    "counts": {
+      "0.30": {
+        "full_pool": 266,
+        "sub20um": 94,
+        "sub10um": 50
+      },
+      "0.20": {
+        "full_pool": 1067,
+        "sub20um": 301,
+        "sub10um": 119
+      }
+    }
+  },
+  "octuplet": {
+    "theta_dim": 45,
+    "pool_total": 4536,
+    "pool_sub20um": 295,
+    "pool_sub10um": 38,
+    "counts": {
+      "0.30": {
+        "full_pool": 118,
+        "sub20um": 33,
+        "sub10um": 12
+      },
+      "0.20": {
+        "full_pool": 359,
+        "sub20um": 67,
+        "sub10um": 15
+      }
+    }
+  }
+}

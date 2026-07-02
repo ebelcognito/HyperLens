@@ -1,0 +1,37 @@
+# SA+GA+Refine baseline hyperparameters for the 100k-budget no-refine
+# experiments. Used for triplet, sixlet, and octuplet runs.
+#
+# Key choice: tracker_threshold = -10 (very loose) so we capture the
+# entire SA+GA-discovered design distribution. Diversity comparison is
+# done post-hoc at any threshold by filtering the unrefined elites JSON.
+
+seed: 42
+population_size: 100
+generations_max: 200
+
+# --- SA inner loop ---
+sa_iter_max: 50
+sa_rand_range: 0.1
+sa_plateau_window: 20
+sa_plateau_min_delta: 0.0025
+
+# --- GA selection ---
+ga_selection_ratio: 0.06
+ga_elite_ratio: 0.02
+ga_diversity_min_distance: 0.05
+
+# --- ADAM ---
+adam_iter_num: 30
+adam_lr: 0.001
+adam_beta1: 0.9
+adam_beta2: 0.9
+adam_cos_T: 10.0
+adam_plateau_window: 10
+adam_plateau_eps: 0.001
+
+# --- Mutation ---
+mutation_num_genes: 2
+
+# --- Tracker (broad capture for fair-threshold comparison) ---
+tracker_threshold: -10.0
+max_tracked_elites: 2000

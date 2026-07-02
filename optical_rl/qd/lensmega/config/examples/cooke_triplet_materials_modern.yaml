@@ -1,0 +1,129 @@
+# ============================================================================
+# Cooke Triplet — Materials (LEGACY-BEHAVIOR BASELINE for A/B comparison)
+# ============================================================================
+# Currently configured to emulate the legacy cooke_triplet_materials.yaml
+# behavior: high new_cell_bonus, no sigmoid damping, no fitness_patience.
+# Use this as the baseline; flip the knobs in the algorithm: block to switch
+# to the modern anti-runaway stack and re-run for comparison.
+#
+# To switch this file to modern behavior, change in algorithm::
+#   new_cell_bonus:           1.0e6  -> 1
+#   scale_bonus_by_fitness:   false  -> true
+#   bonus_fitness_threshold:  (n/a)  -> -1.0
+#   bonus_fitness_scale:      (n/a)  -> 50.0
+#   restart_patience:         5      -> 3
+#   fitness_patience:         0      -> 100
+#   fitness_improve_eps:      (n/a)  -> 1.0e-6
+# (bonus_fitness_threshold/scale are inert while scale_bonus_by_fitness=false,
+# but kept here so the diff between baseline and modern is the bool + the
+# patience knobs only.)
+#
+# Cosmetic differences vs the legacy YAML that DON'T affect search dynamics:
+#   - lens_path                            relative DeepLens/ path (Longleaf)
+#   - log_gradients: false                 disables per-gen npz writes (speed)
+#   - run_name                             cooke_triplet_materials_baseline
+
+problem:
+  kind: lens
+  lens_path: DeepLens/datasets/lenses/cooke_smaller_ap_1mm.json
+  wavelength_um: 0.587
+  fitness_wavelengths_um: [0.486, 0.587, 0.656]
+  object_depth_mm: -20000.0
+  stop_surface_index: 4
+  parameterization: full_dof
+
+  free_curvature_indices: [0, 1, 2, 3, 5, 6]
+  derived_curvature_index: null
+  focal_length_target_mm: 50.0
+  efl_penalty_weight: 10.0
+
+  free_gap_indices: [0, 1, 2, 3, 4, 5]
+  variable_flange: true
+  variable_materials: true
+  free_material_indices: [0, 1, 2]   # all 3 glass elements
+
+  theta_bounds:
+    # --- 6 curvatures: fully unconstrained ---
+    - [-0.08, 0.08]      # c0  E1 front (crown)
+    - [-0.08, 0.08]      # c1  E1 back
+    - [-0.08, 0.08]      # c2  E2 front (flint)
+    - [-0.08, 0.08]      # c3  E2 back
+    - [-0.08, 0.08]      # c5  E3 front (crown)
+    - [-0.08, 0.08]      # c6  E3 back
+    # --- 6 gaps: physical manufacturing constraints ---
+    - [0.8, 3.2]         # g0  E1 thickness
+    - [0.5, 10.0]        # g1  Air gap E1->E2
+    - [0.8, 3.2]         # g2  E2 thickness
+    - [0.5, 10.0]        # g3  Air gap E2->Stop
+    - [0.5, 10.0]        # g4  Air gap Stop->E3
+    - [0.8, 3.2]         # g5  E3 thickness
+    # --- flange ---
+    - [30.0, 65.0]       # flange (last surface to sensor)
+    # --- materials: (n, V) per element ---
+    - [1.45, 1.85]       # n_0  E1 refractive index
+    - [25, 75]           # V_0  E1 Abbe number
+    - [1.45, 1.85]       # n_1  E2
+    - [25, 75]           # V_1
+    - [1.45, 1.85]       # n_2  E3
+    - [25, 75]           # V_2
+
+  stage: stage2
+  num_rays: 256
+  invalid_tol: 0.2
+  invalid_penalty_weight: 5.0
+  intersect_penalty_weight: 1.0
+  air_min_mm: 0.1
+  thick_min_mm: 0.5
+  strict_entrance_pupil: false
+  descriptor_field_index: 1
+
+descriptor:
+  kind: seidel
+  params:
+    terms: ["S2", "S3"]
+
+algorithm:
+  population_size: 18
+  initial_sigma: 0.5
+  cma_eta: 0.15                 # unchanged from base (small-r_sensor template
+                                # tolerates the stronger update; APS-C version
+                                # uses 0.10)
+  cma_seed: 42
+  seed_count: 1000
+  calibration_count: 1000
+  iterations: 10000
+
+  # --- anti-sigma-runaway stack (LEGACY BASELINE — emulates old behavior) -
+  # All knobs set to the legacy cooke_triplet_materials.yaml defaults so this
+  # run is a clean A/B baseline against a modern-stack run on the same problem.
+  # See file header for the diff to flip back to modern.
+  new_cell_bonus: 1.0e6         # legacy magnitude — dwarfs fitness signal
+  scale_bonus_by_fitness: false # legacy: no sigmoid damping
+  bonus_fitness_threshold: -1.0 # inert while scale_bonus_by_fitness=false
+  bonus_fitness_scale: 50.0     # inert while scale_bonus_by_fitness=false
+  log_every: 50
+  restart_patience: 5           # legacy default
+  fitness_patience: 0           # 0 = trigger disabled (legacy behavior)
+  fitness_improve_eps: 1.0e-6   # inert while fitness_patience=0
+
+archive:
+  bins: [256, 256]
+  bounds: [[-0.001, 0.001], [-0.001, 0.001]]
+  bound_calibration_pad: 0.05
+
+io:
+  results_dir: results/lensmega
+  run_name: cooke_triplet_materials_baseline
+  checkpoint_every: 100
+  device: auto
+  elite_fitness_threshold: -0.2
+  refine_efl_penalty_weight: 20.0
+  refine_invalid_penalty_weight: 10.0
+  refine_intersect_penalty_weight: 2.0
+  refine_lbfgs_max_steps: 100
+  refine_lbfgs_lr: 0.5
+  refine_converge_tol: 0.0001
+  refine_field_weights: [1.0, 2.0, 4.0]
+  refine_stability_samples: 20
+  refine_stability_perturbation: 0.005
+  log_gradients: false

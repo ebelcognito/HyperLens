@@ -17,7 +17,7 @@
 
 problem:
   kind: lens
-  lens_path: /home/hisham26/Desktop/RL/DeepLens/datasets/lenses/septlet_50mm_f3_apsc.json
+  lens_path: DeepLens/datasets/lenses/septlet_50mm_f3_apsc.json
   wavelength_um: 0.587
   fitness_wavelengths_um: [0.486, 0.587, 0.656]
   object_depth_mm: -20000.0
@@ -103,7 +103,7 @@ problem:
 descriptor:
   kind: seidel
   params:
-    terms: ["S2", "S3"]
+    terms: ["S2", "S4"]
 
 algorithm:
   population_size: 24
@@ -125,7 +125,7 @@ algorithm:
   # existing-cell improvement, but a bad new cell loses to one.
   scale_bonus_by_fitness: true
   bonus_fitness_threshold: -1.0
-  bonus_fitness_scale: 2.0
+  bonus_fitness_scale: 10.0
   log_every: 50
   restart_patience: 3
   # Break sigma-runaway equilibria: restart if best_fitness has not improved
@@ -133,7 +133,7 @@ algorithm:
   # absorbing corner-saturated novelty. The first APS-C run hit this exact
   # mode — best frozen at -4.628 from gen 500 onward while sigma climbed to
   # 2e9 by gen 700. 0 disables.
-  fitness_patience: 50
+  fitness_patience: 100
   fitness_improve_eps: 1.0e-6
 
 archive:

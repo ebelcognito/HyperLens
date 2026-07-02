@@ -12,6 +12,7 @@ for _k in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
     _os.environ.setdefault(_k, "1")
 
 import argparse
+import sys
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -19,6 +20,12 @@ import numpy as np
 import torch
 
 torch.set_num_threads(1)
+
+# DeepLens is a sibling directory (see README); not always on PYTHONPATH after pip install.
+_DEEPLENS_ROOT = Path(__file__).resolve().parents[3] / "DeepLens"
+_dlr = str(_DEEPLENS_ROOT)
+if _dlr not in sys.path:
+    sys.path.insert(0, _dlr)
 
 from optical_rl.qd.singlet_cmamega import GradientCoefficientCMA
 
@@ -31,6 +38,7 @@ from .core.output_manager import OutputManager
 from .core.runner import CMAMEGARunner
 from .core.seeder import Seeder
 from .descriptors.base import Descriptor
+from .descriptors.lens_param import LensParamDescriptor
 from .descriptors.random_proj import RandomProjectionDescriptor
 from .descriptors.seidel import SeidelDescriptor
 from .descriptors.zernike import ZernikeDescriptor
@@ -55,6 +63,12 @@ def _build_descriptor(cfg: RunConfig) -> Descriptor:
             seed=int(params.get("seed", 12345)),
             theta_dim=len(cfg.problem.theta_bounds),
             theta_bounds=list(cfg.problem.theta_bounds),
+        )
+    if kind == "lens_param":
+        return LensParamDescriptor(
+            indices=list(params["indices"]),
+            names=list(params["names"]) if params.get("names") else None,
+            theta_dim=len(cfg.problem.theta_bounds),
         )
     raise ValueError(f"unknown descriptor kind {kind!r}")
 

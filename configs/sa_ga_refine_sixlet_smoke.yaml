@@ -1,0 +1,19 @@
+# Smoke-test config: tiny population, tiny iters. ~5k evals total.
+seed: 42
+population_size: 20
+generations_max: 5
+sa_iter_max: 8
+sa_rand_range: 0.1
+sa_plateau_window: 4
+sa_plateau_min_delta: 0.0025
+ga_selection_ratio: 0.2
+ga_elite_ratio: 0.1
+ga_diversity_min_distance: 0.05
+adam_iter_num: 5
+adam_lr: 0.001
+adam_beta1: 0.9
+adam_beta2: 0.9
+adam_cos_T: 10.0
+adam_plateau_window: 3
+adam_plateau_eps: 0.001
+mutation_num_genes: 2

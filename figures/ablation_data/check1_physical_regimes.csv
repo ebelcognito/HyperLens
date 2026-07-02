@@ -1,0 +1,5 @@
+method,pool_lt_30um,param_eps_distinct_0.20,param_eps_distinct_0.30,distinct_curvature_sign_patterns,distinct_element_power_signs
+HL,414,32,13,30,6
+SAGA-steelman,23,23,8,9,3
+NoGrad,336,68,21,36,7
+RandomBC,363,96,29,41,7

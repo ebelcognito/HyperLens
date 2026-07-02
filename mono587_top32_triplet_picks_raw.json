@@ -1,0 +1,354 @@
+{
+  "system": "triplet",
+  "square_R": 0.001,
+  "n_picks_resolved": 25,
+  "n_oob_dropped": 7,
+  "n_unresolved": 0,
+  "oob_dropped": [
+    {
+      "rank": 4,
+      "S2": -34.7967529296875,
+      "S3": 7.236597061157227,
+      "raw_fit": -0.29001289082476
+    },
+    {
+      "rank": 8,
+      "S2": -28.69883155822754,
+      "S3": 3.985391855239868,
+      "raw_fit": -0.20950667197869305
+    },
+    {
+      "rank": 15,
+      "S2": -31.94506072998047,
+      "S3": 0.1709303855895996,
+      "raw_fit": -0.43113537438746297
+    },
+    {
+      "rank": 25,
+      "S2": -19.306180953979492,
+      "S3": -0.08696538209915161,
+      "raw_fit": -0.41763481307741446
+    },
+    {
+      "rank": 29,
+      "S2": -41.88285827636719,
+      "S3": -9.226617813110352,
+      "raw_fit": -0.4422358600144802
+    },
+    {
+      "rank": 30,
+      "S2": -31.510665893554688,
+      "S3": -11.630853652954102,
+      "raw_fit": -0.46698525069907393
+    },
+    {
+      "rank": 32,
+      "S2": -20.01987648010254,
+      "S3": -7.4193010330200195,
+      "raw_fit": -0.2851597541186195
+    }
+  ],
+  "unresolved_ranks": [],
+  "picks": [
+    {
+      "rank": 1,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 280,
+      "mono_fitness": -0.0001955495182247019,
+      "mono_rms_um": 0.19554434915153238,
+      "poly_rms_um": 0.15967118437399916,
+      "raw_S2": -0.00015313462881069994,
+      "raw_S3": 0.00010416577108363809,
+      "raw_fitness": -0.5853889371705908,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 2,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 387,
+      "mono_fitness": -0.0005391636558255698,
+      "mono_rms_um": 0.5351951711913273,
+      "poly_rms_um": 23.92390012662557,
+      "raw_S2": -3.249021902626477e-07,
+      "raw_S3": -0.0009044010782856814,
+      "raw_fitness": -21.65579836185308,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 3,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 278,
+      "mono_fitness": -0.0006047082532880028,
+      "mono_rms_um": 0.60251384766368,
+      "poly_rms_um": 10.305882213102855,
+      "raw_S2": -0.00014633660370304852,
+      "raw_S3": 0.00042032642087139904,
+      "raw_fitness": -6.5543139305123415,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 5,
+      "run": "cooke_triplet_materials_modernstack_seed43_20260506_041650",
+      "idx": 165,
+      "mono_fitness": -0.0008539363529394733,
+      "mono_rms_um": 0.8529149411629816,
+      "poly_rms_um": 0.9943346127574003,
+      "raw_S2": -7.650719346341154e-05,
+      "raw_S3": 2.3414798060598295e-05,
+      "raw_fitness": -1.0098531407556217,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 6,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 262,
+      "mono_fitness": -0.0014849134286620553,
+      "mono_rms_um": 1.4796258470184127,
+      "poly_rms_um": 11.678749931889184,
+      "raw_S2": 3.8140233489108145e-05,
+      "raw_S3": 3.028477222991388e-06,
+      "raw_fitness": -0.7156535233142696,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 7,
+      "run": "cooke_triplet_materials_modernstack_seed43_20260506_041650",
+      "idx": 55,
+      "mono_fitness": -0.0017184584682129519,
+      "mono_rms_um": 1.716473260921952,
+      "poly_rms_um": 17.056901420404518,
+      "raw_S2": -9.452555092609787e-05,
+      "raw_S3": 0.00016869398888601846,
+      "raw_fitness": -0.37887828399861717,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 9,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 364,
+      "mono_fitness": -0.0021097883568889446,
+      "mono_rms_um": 2.109151783414123,
+      "poly_rms_um": 14.51106619744308,
+      "raw_S2": -0.00044045746766445014,
+      "raw_S3": -0.0002794615935329872,
+      "raw_fitness": -29.857228318328538,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 10,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 37,
+      "mono_fitness": -0.002175649396832975,
+      "mono_rms_um": 2.1754167989631212,
+      "poly_rms_um": 6.6154570639958825,
+      "raw_S2": 0.0006382086165060134,
+      "raw_S3": 4.021663494387501e-05,
+      "raw_fitness": -1.6313700541696046,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 11,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 97,
+      "mono_fitness": -0.00311587830929601,
+      "mono_rms_um": 3.1156701656212697,
+      "poly_rms_um": 10.766247587642212,
+      "raw_S2": -0.0005597788198193835,
+      "raw_S3": -0.0004001888891001473,
+      "raw_fitness": -8.142489994567452,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 12,
+      "run": "cooke_triplet_materials_modernstack_seed42_20260506_033503",
+      "idx": 68,
+      "mono_fitness": -0.0032520644663296713,
+      "mono_rms_um": 3.2515219238067634,
+      "poly_rms_um": 4.726849586519067,
+      "raw_S2": -4.2333537606425465e-05,
+      "raw_S3": 0.00011810045418153872,
+      "raw_fitness": -0.7960755196149267,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 13,
+      "run": "cooke_triplet_materials_modernstack_seed42_20260506_033503",
+      "idx": 494,
+      "mono_fitness": -0.00332240683906314,
+      "mono_rms_um": 3.322399126780772,
+      "poly_rms_um": 13.071483827511129,
+      "raw_S2": -0.0002530024338581671,
+      "raw_S3": -0.0002591168052678346,
+      "raw_fitness": -21.800620957010366,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 14,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 482,
+      "mono_fitness": -0.0034670102033542913,
+      "mono_rms_um": 3.4655660502549632,
+      "poly_rms_um": 26.145688519786233,
+      "raw_S2": -0.0003483569353637454,
+      "raw_S3": 0.0003094604865192346,
+      "raw_fitness": -2.8105326917533633,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 16,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 177,
+      "mono_fitness": -0.0037584149924827816,
+      "mono_rms_um": 3.751364180282022,
+      "poly_rms_um": 22.917795805926716,
+      "raw_S2": -9.845754862244435e-05,
+      "raw_S3": 2.3752764263519274e-05,
+      "raw_fitness": -0.28139989403423693,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 17,
+      "run": "cooke_triplet_materials_modernstack_seed43_20260506_041650",
+      "idx": 115,
+      "mono_fitness": -0.003976100290282392,
+      "mono_rms_um": 3.9733000306741983,
+      "poly_rms_um": 19.964257990508997,
+      "raw_S2": -0.00010570991275137244,
+      "raw_S3": -1.4841438730080795e-05,
+      "raw_fitness": -0.8882494550933544,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 18,
+      "run": "cooke_triplet_materials_modernstack_seed43_20260506_041650",
+      "idx": 291,
+      "mono_fitness": -0.003995925621701855,
+      "mono_rms_um": 3.9924986493035535,
+      "poly_rms_um": 8.896786339091951,
+      "raw_S2": -0.00014026110873381322,
+      "raw_S3": 0.00040555393373717185,
+      "raw_fitness": -6.335746305211935,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 19,
+      "run": "cooke_triplet_materials_modernstack_seed42_20260506_033503",
+      "idx": 479,
+      "mono_fitness": -0.0046947202982844,
+      "mono_rms_um": 4.685489514594982,
+      "poly_rms_um": 26.953266851292625,
+      "raw_S2": -0.0005619385226838775,
+      "raw_S3": -0.00010052205650327527,
+      "raw_fitness": -27.349585135150154,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 20,
+      "run": "cooke_triplet_materials_modernstack_seed43_20260506_041650",
+      "idx": 92,
+      "mono_fitness": -0.004840649181764603,
+      "mono_rms_um": 4.835476364709904,
+      "poly_rms_um": 11.717228732268177,
+      "raw_S2": -1.8449883641424693e-05,
+      "raw_S3": -9.955792478639222e-06,
+      "raw_fitness": -0.03262498359179865,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 21,
+      "run": "cooke_triplet_materials_modernstack_seed42_20260506_033503",
+      "idx": 307,
+      "mono_fitness": -0.004959321844805481,
+      "mono_rms_um": 4.959312438214419,
+      "poly_rms_um": 15.621434342356736,
+      "raw_S2": -6.76507570601583e-05,
+      "raw_S3": -1.81812231501946e-06,
+      "raw_fitness": -0.7629803750243559,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 22,
+      "run": "cooke_triplet_materials_modernstack_seed43_20260506_041650",
+      "idx": 482,
+      "mono_fitness": -0.00560991267017925,
+      "mono_rms_um": 5.608474309992737,
+      "poly_rms_um": 17.351530222877955,
+      "raw_S2": -0.00014874395324935148,
+      "raw_S3": 0.00026197774402410013,
+      "raw_fitness": -5.583036159732993,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 23,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 326,
+      "mono_fitness": -0.006066360607626414,
+      "mono_rms_um": 6.063013557075031,
+      "poly_rms_um": 15.797750661454463,
+      "raw_S2": -0.0003440944061973623,
+      "raw_S3": -0.0002537160771950127,
+      "raw_fitness": -22.634654860077365,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 24,
+      "run": "cooke_triplet_materials_modernstack_seed43_20260506_041650",
+      "idx": 259,
+      "mono_fitness": -0.006524024482095054,
+      "mono_rms_um": 6.522698422676338,
+      "poly_rms_um": 11.54124416571961,
+      "raw_S2": -0.00018688260334120168,
+      "raw_S3": 0.00014665705695503082,
+      "raw_fitness": -2.656160475627933,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 26,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 9,
+      "mono_fitness": -0.007379732658729905,
+      "mono_rms_um": 7.376266271104965,
+      "poly_rms_um": 16.20138454735756,
+      "raw_S2": -0.00042712874323853705,
+      "raw_S3": -0.0008798445665610732,
+      "raw_fitness": -21.252003556833188,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 27,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 105,
+      "mono_fitness": -0.00749841213263043,
+      "mono_rms_um": 7.497994997376092,
+      "poly_rms_um": 8.288922528814739,
+      "raw_S2": 0.0001549361350598273,
+      "raw_S3": -0.00010186731832109585,
+      "raw_fitness": -0.7861199145810983,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 28,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 216,
+      "mono_fitness": -0.007792164605779159,
+      "mono_rms_um": 7.79204256155199,
+      "poly_rms_um": 8.334079114587624,
+      "raw_S2": -0.00011306210112663149,
+      "raw_S3": 4.713764381785687e-05,
+      "raw_fitness": -1.3405564545651034,
+      "source": "archive_cells.json (kind=seidel)"
+    },
+    {
+      "rank": 31,
+      "run": "cooke_triplet_modernstack_NOGRAD_seed42_20260508_170523",
+      "idx": 15,
+      "mono_fitness": -0.008589614215317145,
+      "mono_rms_um": 8.587515944647041,
+      "poly_rms_um": 19.402812411819568,
+      "raw_S2": -0.000272879304049762,
+      "raw_S3": 0.0008252762193921995,
+      "raw_fitness": -6.45218260422196,
+      "source": "archive_cells.json (kind=seidel)"
+    }
+  ]
+}

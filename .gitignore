@@ -69,3 +69,7 @@ experiments/**/lineage.jsonl
 experiments/**/archive_cells.json
 experiments/**/gradient_log.npz
 experiments/**/checkpoint*
+
+# ===== Large regenerable archive dumps (too big for GitHub) =====
+aggregated_*_seidel_archive.json
+logs/
