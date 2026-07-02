@@ -73,3 +73,9 @@ experiments/**/checkpoint*
 # ===== Large regenerable archive dumps (too big for GitHub) =====
 aggregated_*_seidel_archive.json
 logs/
+
+# ===== Local credentials — never commit =====
+github_pat.txt
+*pat*.txt
+*token*
+*.pem
